@@ -1,0 +1,18 @@
+P = parse_and_compile(`
+const a = 2;
+const b = 7;
+function f(x, y) {
+  const c = 2;
+  const d = 3;
+  return x - y * a + b - c + d;
+}
+f(3, 1);
+`);
+
+initialize_machine(300);
+run();
+
+// expected: 
+Running VM with heap size: 300
+result: heap node of type = number, value = 9 ""
+undefined

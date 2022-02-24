@@ -1,0 +1,9 @@
+P = parse_and_compile('1 > 3 ? 100 : 200;');
+
+initialize_machine(400);
+run();
+
+// expected: 
+Running VM with heap size: 400
+result: heap node of type = number, value = 200 ""
+undefined
