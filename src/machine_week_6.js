@@ -793,15 +793,21 @@ let HEAP = NaN;
 let FREE = -Infinity;
 // the size of the heap is fixed
 let HEAP_SIZE = -Infinity;
+// the size of the usable space is fixed
+let SPACE_SIZE = -Infinity;
 // temporary root
 let TEMP_ROOT = -Infinity;
+
+let Tospace = -Infinity;
+let Fromspace = -Infinity;
+let Topofspace = -Infinity;
 
 // general node layout
 const TAG_SLOT = 0;
 const SIZE_SLOT = 1;
 const FIRST_CHILD_SLOT = 2;
 const LAST_CHILD_SLOT = 3;
-	
+
 // ///////////////////////////////////
 // MEMORY MANAGEMENT
 // ///////////////////////////////////
@@ -810,10 +816,23 @@ function initialize_machine(heapsize) {
     display(heapsize, "\nRunning VM with heap size:");
     HEAP = [];
     HEAP_SIZE = heapsize;
-    FREE = 0;
     RUNNING = true;
     STATE = NORMAL;
     PC = 0;
+
+    // For copying GC
+    Tospace = 0;
+    SPACE_SIZE = heapsize / 2;
+    Topofspace = Tospace + SPACE_SIZE - 1;
+    Fromspace = Topofspace + 1;
+    FREE = Tospace;
+    display("INIT");
+    display(Tospace);
+    display(Fromspace);
+}
+
+function flip() {
+
 }
 
 // NEW expects tag in A and size in B
@@ -821,10 +840,41 @@ function initialize_machine(heapsize) {
 function NEW() {
     J = A;
     K = B;
-    if (FREE + K >= HEAP_SIZE) {
-       STATE = OUT_OF_MEMORY_ERROR;
-       RUNNING = false;
-	} else {}
+    if (FREE + K > Topofspace) {
+        // Time to flip
+        show_heap("heap");
+        display(Topofspace);
+        const temp = Fromspace;
+        Fromspace = Tospace; Tospace = temp;
+        Topofspace = Tospace + SPACE_SIZE - 1;
+        let scan = Tospace; FREE = Tospace;
+
+        // collect roots
+        let roots = list();
+        let os_index = OS + HEAP[OS + FIRST_CHILD_SLOT];
+        let os_end = OS + HEAP[OS + LAST_CHILD_SLOT];
+        while(os_index <= os_end) {
+            roots = pair(os_index, roots);
+            os_index = os_index + 1;
+        }
+
+        let env_index = ENV + HEAP[ENV + FIRST_CHILD_SLOT];
+        let env_end = ENV + HEAP[ENV + LAST_CHILD_SLOT];
+        display(OS);
+        while(env_index < env_end) {
+            roots = pair(HEAP[env_index], roots);
+            env_index = env_index + 1;
+        }
+
+        display_list(roots);
+
+        while (scan < FREE) {
+
+        }
+    } else {}
+    if (FREE + K > Topofspace) {
+        STATE = OUT_OF_MEMORY_ERROR;
+    }
     HEAP[FREE + TAG_SLOT] = J;
     HEAP[FREE + SIZE_SLOT] = K;
     RES = FREE;
