@@ -7,10 +7,10 @@ function f(x) {
 f(7);
 `);
 
-initialize_machine(160);
+initialize_machine(260);
 run();
 
 // expected: 
-Running VM with heap size: 160
+Running VM with heap size: 260
 result: heap node of type = number, value = 7 ""
 undefined
