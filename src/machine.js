@@ -103,6 +103,10 @@ function initialize_machine(heapsize) {
     PC = 0;
 }
 
+function INVOKE_GC() {
+    display("COLLECTING GARBAGE");
+}
+
 // NEW expects tag in A and size in B
 // changes A, B, C, D, J, K
 function NEW() {
@@ -678,7 +682,13 @@ M[DONE] = () => {
 };
 
 function run() {
+    const GC_PROBABILITY = 1.0;
+
     while (RUNNING) {
+        if (Math.random() < GC_PROBABILITY) {
+            INVOKE_GC();
+        }
+
         if (M[P[PC]] === undefined) {
             error(P[PC], "unknown op-code:");
         } else {
