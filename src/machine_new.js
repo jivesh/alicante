@@ -1,9 +1,5 @@
 // VIRTUAL MACHINE
 
-// "registers" are the global variables of our machine.
-// These contain primitive values (numbers or boolean
-// values) or arrays of primitive values
-
 // P is an array that contains an SVML machine program:
 // the op-codes of instructions and their arguments
 let P = [];
@@ -103,9 +99,9 @@ const WHITE = "white";
 const GREY = "grey";
 const BLACK = "black";
 
-// ///////////////////////////////////
-// MEMORY MANAGEMENT
-// ///////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// MEMORY MANAGEMENT
+///////////////////////////////////////////////////////////////////////////////
 
 function initialize_machine(heapsize) {
     display(heapsize, "\nRunning VM with heap size:");
@@ -129,17 +125,8 @@ function init_heap(heapsize) {
     HEAP[NIL + RIGHT_SLOT] = NIL;
     HEAP[NIL + COLOR_SLOT] = WHITE;
 
-    // Init roots
-    for (let i = 1; i < 3; i = i + 1) {
-        B = i * NODE_SIZE;
-        HEAP[B + VAL_SLOT] = "Root node";
-        HEAP[B + LEFT_SLOT] = NIL;
-        HEAP[B + RIGHT_SLOT] = NIL;
-        HEAP[B + COLOR_SLOT] = WHITE;
-    }
-
     // Link all others as free
-    for (let i = 3; i < A; i = i + 1) {
+    for (let i = 1; i < A; i = i + 1) {
         B = i * NODE_SIZE;
         HEAP[B + VAL_SLOT] = "Free node";
         HEAP[B + LEFT_SLOT] = i === A - 1 ? NIL : NODE_SIZE * ((i + 1) % A);
@@ -147,7 +134,7 @@ function init_heap(heapsize) {
         HEAP[B + COLOR_SLOT] = WHITE;
     }
 
-    FREE = 3 * NODE_SIZE;
+    FREE = 1 * NODE_SIZE;
     HEAP[FREE + VAL_SLOT] = "Free root";
 }
 
@@ -327,7 +314,7 @@ function EXTEND() {
     while (HEAP[G + LEFT_SLOT] !== NIL) {
         NEW_ENV_BIND();
         HEAP[H + LEFT_SLOT] = RES;
-        HEAP[RES + RIGHT_SLOT] = HEAP[G + LEFT_SLOT];
+        HEAP[RES + RIGHT_SLOT] = HEAP[HEAP[G + LEFT_SLOT] + RIGHT_SLOT];
         H = RES;
         G = HEAP[G + LEFT_SLOT];
     }
@@ -384,45 +371,6 @@ function POP_RTS() {
     TOP_RTS = TOP_RTS - 1;
 }
 
-// // debugging: show current heap
-// function is_node_tag(x) {
-//     return x !== undefined && x <= -100 && x >= -110;
-// }
-// function node_kind(x) {
-//     return x === NUMBER_TAG
-//         ? "number"
-//         : x === BOOL_TAG
-//         ? "bool"
-//         : x === CLOSURE_TAG
-//         ? "closure"
-//         : x === RTS_FRAME_TAG
-//         ? "RTS frame"
-//         : x === OS_TAG
-//         ? "OS"
-//         : x === ENV_TAG
-//         ? "environment"
-//         : x === UNDEFINED_TAG
-//         ? "undefined"
-//         : " (unknown node kind)";
-// }
-// function show_heap(s) {
-//     const len = array_length(HEAP);
-//     let i = 0;
-//     display("", "--- HEAP --- " + s);
-//     while (i < len) {
-//         display(
-//             "",
-//             stringify(i) +
-//                 ": " +
-//                 stringify(HEAP[i]) +
-//                 (is_number(HEAP[i]) && is_node_tag(HEAP[i])
-//                     ? " (" + node_kind(HEAP[i]) + ")"
-//                     : "")
-//         );
-//         i = i + 1;
-//     }
-// }
-
 function show_heap_value(address) {
     display(
         "",
@@ -430,25 +378,9 @@ function show_heap_value(address) {
     );
 }
 
-// SVMLa implementation
-
-// We implement our machine with an array M that
-// contains subroutines. Each subroutine implements
-// a machine instruction, using a nullary function.
-// The machine can then index into M using the op-codes
-// of the machine instructions. To be implementable on
-// common hardware, the subroutines have the
-// following structure:
-// * they have no parameters
-// * they do not return any results
-// * they do not have local variables
-// * they do not call other functions except the
-//   subroutines PUSH and POP
-// * each line is very simple, for example an array access
-// Ideally, each line can be implemented directly with a
-// machine instruction of a real computer. In that case,
-// the subroutines could become machine language macros,
-// and the compiler could generate real machine code.
+///////////////////////////////////////////////////////////////////////////////
+/// Machine Stuff
+///////////////////////////////////////////////////////////////////////////////
 
 const M = [];
 
@@ -667,6 +599,10 @@ M[RTN] = () => {
 M[DONE] = () => {
     RUNNING = false;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+/// Main loop
+///////////////////////////////////////////////////////////////////////////////
 
 function run() {
     const GC_PROBABILITY = 1.0;
