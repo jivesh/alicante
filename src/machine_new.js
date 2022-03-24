@@ -126,10 +126,10 @@ function init_heap(heapsize) {
     HEAP[NIL + COLOR_SLOT] = WHITE;
 
     // Link all others as free
-    for (let i = 1; i < A; i = i + 1) {
-        B = i * NODE_SIZE;
+    for (C = 1; C < A; C = C + 1) {
+        B = C * NODE_SIZE;
         HEAP[B + VAL_SLOT] = "Free node";
-        HEAP[B + LEFT_SLOT] = i === A - 1 ? NIL : NODE_SIZE * ((i + 1) % A);
+        HEAP[B + LEFT_SLOT] = C === A - 1 ? NIL : NODE_SIZE * ((C + 1) % A);
         HEAP[B + RIGHT_SLOT] = NIL;
         HEAP[B + COLOR_SLOT] = WHITE;
     }
@@ -604,18 +604,30 @@ M[DONE] = () => {
 /// Main loop
 ///////////////////////////////////////////////////////////////////////////////
 
+function scan_heap() {
+    let K = 0;
+    for (I = 0; I < array_length(HEAP); I = I + NODE_SIZE) {
+        J = HEAP[I + VAL_SLOT];
+        if (J === "Free node" || J === "Free root") {
+            K = K + 1;
+        }
+    }
+    display(array_length(HEAP) - K * 4, "Used: ");
+}
+
 function run() {
-    const GC_PROBABILITY = 1.0;
+    const GC_PROBABILITY = 0.5;
 
     while (RUNNING) {
         if (math_random() < GC_PROBABILITY) {
             INVOKE_GC();
-        }
-
-        if (M[P[PC]] === undefined) {
-            error(P[PC], "unknown op-code:");
         } else {
-            M[P[PC]]();
+            if (M[P[PC]] === undefined) {
+                error(P[PC], "unknown op-code:");
+            } else {
+                M[P[PC]]();
+            }
+            scan_heap();
         }
     }
     if (STATE === DIV_ERROR) {
