@@ -295,7 +295,7 @@ function BIND_IN_ENV() {
         } else {
             G = HEAP[G + LEFT_SLOT];
         }
-        B -= 1;
+        B = B - 1;
     }
 
     // Assign binding
@@ -309,14 +309,31 @@ function ACCESS_ENV() {
     display("Acessing env");
     G = ENV;
     B = A + 1;
-    while (A > 0) {
+    while (B > 0) {
         G = HEAP[G + LEFT_SLOT];
+        B = B - 1;
     }
     RES = HEAP[G + RIGHT_SLOT];
 }
 
-//
-function EXTEND() {}
+// Expects: base env in A, extended part in B
+// Returns: RES and A is extended env
+function EXTEND() {
+    G = A;
+    NEW_ENVIRONMENT();
+    H = RES;
+    I = H;
+
+    while (HEAP[G + LEFT_SLOT] !== NIL) {
+        NEW_ENV_BIND();
+        HEAP[H + LEFT_SLOT] = RES;
+        HEAP[RES + RIGHT_SLOT] = HEAP[G + LEFT_SLOT];
+        H = RES;
+        G = HEAP[G + LEFT_SLOT];
+    }
+    HEAP[H + LEFT_SLOT] = HEAP[B + LEFT_SLOT];
+    RES = I;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Closure Stuff
@@ -608,17 +625,18 @@ M[CALL] = () => {
     NEW_ENVIRONMENT();
     C = RES; // C is extended part of env
 
-    for (B = K; B > 0; B = B - 1) {
+    for (L = K; L > 0; L = L - 1) {
         POP_OS();
         A = RES;
+        B = L - 1;
         BIND_IN_ENV();
     }
 
     POP_OS();
     L = RES; // L is closure node
 
-    M = HEAP[L + RIGHT_SLOT]; // M is closure info node
-    A = HEAP[M + LEFT_SLOT]; // A is closure env
+    N = HEAP[L + LEFT_SLOT]; // N is closure info node
+    A = HEAP[N + LEFT_SLOT]; // A is closure env
 
     B = C;
     EXTEND();
@@ -631,7 +649,7 @@ M[CALL] = () => {
 
     OS = E;
     ENV = D;
-    PC = HEAP[M + VAL_SLOT];
+    PC = HEAP[N + VAL_SLOT];
 };
 
 M[RTN] = () => {
@@ -643,7 +661,7 @@ M[RTN] = () => {
     POP_OS();
     A = RES;
     OS = HEAP[H + LEFT_SLOT];
-    PUSH_OS();
+    PUSH_OS_NODE();
 };
 
 M[DONE] = () => {
