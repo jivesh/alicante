@@ -90,8 +90,9 @@ let FREE_LEFT = -Infinity;
 let NIL = -Infinity;
 // the size of the heap is fixed
 let HEAP_SIZE = -Infinity;
-// temporary root
-let TEMP_ROOT = -Infinity;
+
+// special register to help in breaking call
+let CALL_RESUME = false;
 
 // general node layout
 const NODE_SIZE = 4;
@@ -150,90 +151,86 @@ function init_heap(heapsize) {
 /// GC Stuff
 ///////////////////////////////////////////////////////////////////////////////
 
-function STOP_THE_WORLD() {
-    display(
-        "STOPPED THE WORLD",
-        "--------------------------------------------------"
-    );
-    // Add roots
-    Q = []; // Queue
-    Q[0] = FREE;
-    HEAP[FREE + COLOR_SLOT] = GREY;
+// GC states
+MARK = 0;
+APPEND = 1;
 
-    Q[1] = ENV;
-    HEAP[ENV + COLOR_SLOT] = GREY;
+GC_STATE = MARK;
 
-    Q[2] = OS;
-    HEAP[OS + COLOR_SLOT] = GREY;
+GC_INDEX = 0;
+GC_COUNTER = HEAP_SIZE;
 
-    K = 3; // Back pointer
-    for (C = 0; C <= TOP_RTS; C = C + 1) {
-        Q[K] = RTS[C];
-        HEAP[Q[K] + COLOR_SLOT] = GREY;
-        K = K + 1;
-    }
-
-    // Marking
-    O = 0; // Front pointer
-    while (O < K) {
-        D = Q[O];
-        if (HEAP[D + COLOR_SLOT] === GREY) {
-            // Mark black and add children
-            HEAP[D + COLOR_SLOT] = BLACK;
+function MARK_PHASE() {
+    if (GC_COUNTER === 0) {
+        // Done marking, switch to APPEND
+        GC_STATE = APPEND;
+        GC_INDEX = 0;
+    } else {
+        A = HEAP[GC_INDEX + COLOR_SLOT];
+        if (A === GREY) {
+            // Grey -> Black, shade children
+            HEAP[GC_INDEX + COLOR_SLOT] = BLACK;
 
             for (F = LEFT_SLOT; F <= RIGHT_SLOT; F = F + 1) {
-                E = HEAP[D + F];
+                E = HEAP[GC_INDEX + F];
                 if (E === NIL) {
                 }
                 HEAP[E + COLOR_SLOT] = math_max(HEAP[E + COLOR_SLOT], GREY);
-                Q[K] = E;
-                K = K + 1;
             }
-        } else {
-        }
-        O = O + 1;
-    }
 
-    // Sweeping
-    for (C = 0; C < array_length(HEAP); C = C + NODE_SIZE) {
-        if (HEAP[C + COLOR_SLOT] === WHITE) {
-            // Append white to free list
+            GC_COUNTER = HEAP_SIZE;
+        } else {
+            // Skip, account for node
+            GC_COUNTER = GC_COUNTER - 1;
+        }
+        GC_INDEX = (GC_INDEX + NODE_SIZE) % HEAP_SIZE;
+    }
+}
+
+function APPEND_PHASE() {
+    if (GC_INDEX === HEAP_SIZE) {
+        GC_STATE = MARK;
+        GC_INDEX = 0;
+        GC_COUNTER = HEAP_SIZE;
+    } else {
+        A = HEAP[GC_INDEX + COLOR_SLOT];
+        if (A === BLACK) {
+            HEAP[GC_INDEX + COLOR_SLOT] = WHITE;
+        } else {
             HEAP[FREE + VAL_SLOT] = "Free node";
-            HEAP[C + VAL_SLOT] = "Free root";
-            HEAP[C + LEFT_SLOT] = FREE;
-            HEAP[C + RIGHT_SLOT] = NIL;
-            FREE = C;
+            HEAP[GC_INDEX + VAL_SLOT] = "Free root";
+            HEAP[GC_INDEX + LEFT_SLOT] = FREE;
+            HEAP[GC_INDEX + RIGHT_SLOT] = NIL;
+            FREE = GC_INDEX;
 
             FREE_LEFT = FREE_LEFT + 1;
-        } else {
         }
-        HEAP[C + COLOR_SLOT] = WHITE;
+        GC_INDEX = GC_INDEX + NODE_SIZE;
     }
 }
 
 function INVOKE_GC() {
-    display("COLLECTING GARBAGE");
+    if (GC_STATE === MARK) {
+        display("Marking");
+        MARK_PHASE();
+    } else {
+        display("Appending");
+        APPEND_PHASE();
+    }
 }
 
 // Expects: Requried number of nodes in O
 function CHECK_OOM() {
     if (FREE_LEFT < O) {
-        STOP_THE_WORLD();
-        if (FREE === NIL) {
-            STATE = OUT_OF_MEMORY_ERROR;
-            RUNNING = false;
-        } else {
-        }
+        RES = false;
     } else {
+        RES = true;
     }
 }
 
 // Pops from free list if available
 // Returns: RES is new node address
 function NEW() {
-    O = 1;
-    CHECK_OOM();
-
     RES = FREE;
     FREE = HEAP[FREE + LEFT_SLOT];
     HEAP[FREE + VAL_SLOT] = "Free root";
@@ -251,9 +248,6 @@ function NEW() {
 // Expects: value in A
 // Returns: OS & RES is new OS head
 function PUSH_OS_VAL() {
-    O = 2;
-    CHECK_OOM();
-
     // Allocate number
     NEW();
     HEAP[RES + VAL_SLOT] = A;
@@ -394,15 +388,13 @@ function ACCESS_ENV() {
 // Expects: base env in A, extended part in B
 // Returns: RES and A is extended env
 function EXTEND() {
+    // G = A;
+    // O = 0;
+    // while (HEAP[G + LEFT_SLOT] !== NIL) {
+    //     O = O + 1;
+    //     G = HEAP[G + LEFT_SLOT];
+    // }
     G = A;
-    O = 1;
-    while (HEAP[G + LEFT_SLOT] !== NIL) {
-        O = O + 1;
-        G = HEAP[G + LEFT_SLOT];
-    }
-    G = A;
-
-    CHECK_OOM();
 
     NEW_ENVIRONMENT();
     H = RES;
@@ -427,9 +419,6 @@ function EXTEND() {
 // Returns: RES is closure node
 function NEW_CLOSURE() {
     display("New closure");
-
-    O = 2;
-    CHECK_OOM();
 
     G = A;
     H = B;
@@ -484,6 +473,7 @@ function show_heap_value(address) {
 ///////////////////////////////////////////////////////////////////////////////
 
 const M = [];
+const R = [];
 
 M[START] = () => {
     NEW_OS();
@@ -511,9 +501,6 @@ M[LDCU] = () => {
 };
 
 M[PLUS] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -523,9 +510,6 @@ M[PLUS] = () => {
 };
 
 M[MINUS] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -535,9 +519,6 @@ M[MINUS] = () => {
 };
 
 M[TIMES] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -547,9 +528,6 @@ M[TIMES] = () => {
 };
 
 M[EQUAL] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -559,9 +537,6 @@ M[EQUAL] = () => {
 };
 
 M[LESS] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -571,9 +546,6 @@ M[LESS] = () => {
 };
 
 M[GEQ] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -583,9 +555,6 @@ M[GEQ] = () => {
 };
 
 M[LEQ] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -595,9 +564,6 @@ M[LEQ] = () => {
 };
 
 M[GREATER] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -607,9 +573,6 @@ M[GREATER] = () => {
 };
 
 M[NOT] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = !HEAP[RES + VAL_SLOT];
     PUSH_OS_BOOL();
@@ -617,9 +580,6 @@ M[NOT] = () => {
 };
 
 M[DIV] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     B = A;
@@ -641,6 +601,10 @@ M[POP] = () => {
     PC = PC + 1;
 };
 
+R[POP] = () => {
+    RES = true;
+};
+
 M[JOF] = () => {
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
@@ -652,20 +616,30 @@ M[JOF] = () => {
     }
 };
 
+R[JOF] = () => {
+    RES = true;
+};
+
 M[GOTO] = () => {
     PC = P[PC + 1];
 };
 
-M[ASSIGN] = () => {
-    O = 1;
-    CHECK_OOM();
+R[GOTO] = () => {
+    RES = true;
+};
 
+M[ASSIGN] = () => {
     POP_OS();
     A = RES;
     B = P[PC + 1];
     C = ENV;
     BIND_IN_ENV();
     PC = PC + 2;
+};
+
+R[ASSIGN] = () => {
+    O = 1;
+    CHECK_OOM();
 };
 
 M[LD] = () => {
@@ -676,13 +650,15 @@ M[LD] = () => {
     PC = PC + 2;
 };
 
+R[LD] = () => {
+    O = 1;
+    CHECK_OOM();
+};
+
 M[LDF] = () => {
     A = P[PC + LDF_MAX_OS_SIZE_OFFSET];
     B = P[PC + LDF_ADDRESS_OFFSET];
     C = P[PC + LDF_ENV_EXTENSION_COUNT_OFFSET];
-
-    O = 3;
-    CHECK_OOM();
 
     NEW_CLOSURE();
     A = RES;
@@ -690,11 +666,13 @@ M[LDF] = () => {
     PC = PC + 4;
 };
 
+R[LDF] = () => {
+    O = 3;
+    CHECK_OOM();
+};
+
 M[CALL] = () => {
     N = P[PC + 1]; // Number of args
-
-    O = 2 + N;
-    CHECK_OOM();
 
     NEW_ENVIRONMENT();
     C = RES; // C is extended part of env
@@ -716,16 +694,47 @@ M[CALL] = () => {
     ENV = C; // Temp to keep it from being collected
     OS = L; // Temp to keep it from being collected
 
-    B = C;
+    CALL_RESUME = true;
+};
+
+R[CALL] = () => {
+    N = P[PC + 1];
+
+    O = 2 + N;
+    CHECK_OOM();
+};
+
+const CALL_2 = 23;
+
+M[CALL_2] = () => {
+    L = OS;
+    N = HEAP[L + LEFT_SLOT]; // N is closure info node
+    A = HEAP[N + LEFT_SLOT]; // A is closure env
+
+    B = ENV;
     EXTEND();
-    C = RES; // C is new env
+    ENV = RES; // New extended env
 
     NEW_OS();
-    B = RES; // B is new OS;
+    OS = RES; // New OS
 
-    OS = B;
-    ENV = C;
     PC = HEAP[N + VAL_SLOT];
+
+    CALL_RESUME = false;
+};
+
+R[CALL_2] = () => {
+    L = OS;
+    N = HEAP[L + LEFT_SLOT];
+    A = HEAP[N + LEFT_SLOT];
+
+    O = 2;
+    while (HEAP[A + LEFT_SLOT] !== NIL) {
+        O = O + 1;
+        A = HEAP[A + LEFT_SLOT];
+    }
+
+    CHECK_OOM();
 };
 
 M[RTN] = () => {
@@ -738,6 +747,11 @@ M[RTN] = () => {
     A = RES;
     OS = HEAP[H + LEFT_SLOT];
     PUSH_OS_NODE();
+};
+
+R[RTN] = () => {
+    O = 1;
+    CHECK_OOM();
 };
 
 M[DONE] = () => {
@@ -773,7 +787,22 @@ function run() {
             if (M[P[PC]] === undefined) {
                 error(P[PC], "unknown op-code:");
             } else {
-                M[P[PC]]();
+                H = P[PC];
+                if (H === CALL && CALL_RESUME) {
+                    H = CALL_2;
+                }
+
+                // Check memory
+                if (R[H] === undefined) {
+                    O = 2;
+                    CHECK_OOM();
+                } else {
+                    R[H]();
+                }
+
+                if (RES) {
+                    M[H]();
+                }
             }
             scan_heap();
         }
