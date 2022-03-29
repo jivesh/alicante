@@ -1,10 +1,14 @@
+import sys
+
+MACHINE_FILE = sys.argv[1]
+
 f1 = open("compile.js", 'r')
-f2 = open("machine_new.js", 'r')
+f2 = open(MACHINE_FILE, 'r')
 
 file_out = open("machine_week_6.js", 'w')
 
 for line in f1.readlines():
-    file_out.write(line);
+    file_out.write(line)
 
 for line in f2.readlines():
     file_out.write(line)
