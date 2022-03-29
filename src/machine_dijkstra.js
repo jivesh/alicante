@@ -17,7 +17,7 @@ let RTS = [];
 let TOP_RTS = -1;
 
 // boolean that says whether machine is running
-let RUNNING = NaN;
+let RUNNING = false;
 
 // machine states
 
@@ -152,13 +152,36 @@ function init_heap(heapsize) {
 ///////////////////////////////////////////////////////////////////////////////
 
 // GC states
-MARK = 0;
-APPEND = 1;
+const MARK_ROOTS = 0;
+const MARK = 1;
+const APPEND = 2;
 
-GC_STATE = MARK;
+let GC_STATE = MARK_ROOTS;
 
-GC_INDEX = 0;
-GC_COUNTER = HEAP_SIZE;
+let GC_INDEX = 0;
+let GC_COUNTER = HEAP_SIZE;
+
+function MARK_ROOTS_PHASE() {
+    HEAP[NIL + COLOR_SLOT] = GREY;
+    HEAP[FREE + COLOR_SLOT] = GREY;
+    HEAP[OS + COLOR_SLOT] = GREY;
+    HEAP[ENV + COLOR_SLOT] = GREY;
+    for (let i = 0; i < array_length(RTS); i = i + 1) {
+        HEAP[RTS[i] + COLOR_SLOT] = GREY;
+    }
+
+    GC_STATE = MARK;
+}
+
+function display_color(A) {
+    if (A === GREY) {
+        display("Current color: grey");
+    } else if (A === BLACK) {
+        display("Current color: black");
+    } else {
+        display("Current color: white");
+    }
+}
 
 function MARK_PHASE() {
     if (GC_COUNTER === 0) {
@@ -167,6 +190,10 @@ function MARK_PHASE() {
         GC_INDEX = 0;
     } else {
         A = HEAP[GC_INDEX + COLOR_SLOT];
+
+        // display(GC_INDEX, "Current GC Index:");
+        // display_color(A);
+
         if (A === GREY) {
             // Grey -> Black, shade children
             HEAP[GC_INDEX + COLOR_SLOT] = BLACK;
@@ -189,7 +216,7 @@ function MARK_PHASE() {
 
 function APPEND_PHASE() {
     if (GC_INDEX === HEAP_SIZE) {
-        GC_STATE = MARK;
+        GC_STATE = MARK_ROOTS;
         GC_INDEX = 0;
         GC_COUNTER = HEAP_SIZE;
     } else {
@@ -210,7 +237,10 @@ function APPEND_PHASE() {
 }
 
 function INVOKE_GC() {
-    if (GC_STATE === MARK) {
+    if (GC_STATE === MARK_ROOTS) {
+        display("Marking roots");
+        MARK_ROOTS_PHASE();
+    } else if (GC_STATE === MARK) {
         display("Marking");
         MARK_PHASE();
     } else {
@@ -219,7 +249,7 @@ function INVOKE_GC() {
     }
 }
 
-// Expects: Requried number of nodes in O
+// Expects: Required number of nodes in O
 function CHECK_OOM() {
     if (FREE_LEFT < O) {
         RES = false;
@@ -777,10 +807,10 @@ function scan_heap() {
 }
 
 function run() {
-    const GC_PROBABILITY = 0.0;
+    const GC_PROBABILITY = 0.5;
 
     while (RUNNING) {
-        if (math_random() < GC_PROBABILITY) {
+        if (math_random() < GC_PROBABILITY && PC > 5) {
             INVOKE_GC();
         } else {
             display(PC, "PC: ");
@@ -804,8 +834,8 @@ function run() {
                     M[H]();
                 }
             }
-            scan_heap();
         }
+        scan_heap();
     }
     if (STATE === DIV_ERROR) {
         POP_OS();
@@ -817,3 +847,13 @@ function run() {
         show_heap_value(RES);
     }
 }
+
+P = parse_and_compile(`
+function factorial(n) {
+    return n === 0 ? 1 : n * factorial(n - 1);
+}
+factorial(5);
+`);
+print_program(P);
+initialize_machine(100);
+run();
