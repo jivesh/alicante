@@ -1,7 +1,7 @@
 f1 = open("compile.js", 'r')
 f2 = open("machine_new.js", 'r')
 
-file_out = open("machine_week_6.js", 'w')
+file_out = open("machine_out.js", 'w')
 
 for line in f1.readlines():
     file_out.write(line);
