@@ -346,18 +346,49 @@ function POP_OS() {
 /// Env Stuff
 ///////////////////////////////////////////////////////////////////////////////
 
-// Doesn't expect anything
+// Expects: Size of env in A
 // Returns: RES is new ENV
 function NEW_ENVIRONMENT() {
     display("New ENV");
     NEW();
     HEAP[RES + VAL_SLOT] = "ENV Start";
+    D = RES;
+
+    NEW();
+    HEAP[D + RIGHT_SLOT] = RES;
+    HEAP[RES + VAL_SLOT] = A;
+
+    // Allocate binding nodes
+    G = RES;
+    for (H = 0; H < A; H = H + 1) {
+        NEW_ENV_BIND();
+        HEAP[G + LEFT_SLOT] = RES;
+        G = RES;
+    }
+    RES = D;
 }
 
 function NEW_ENV_BIND() {
     display("New env binding");
     NEW();
     HEAP[RES + VAL_SLOT] = "Env Bind";
+}
+
+// Expects: Env to extend in A, Number of bindings to add in B
+function ADD_BINDINGS() {
+    D = HEAP[A + RIGHT_SLOT];
+    HEAP[D + VAL_SLOT] = HEAP[D + VAL_SLOT] + B;
+
+    G = A;
+    while (HEAP[G + LEFT_SLOT] !== NIL) {
+        G = HEAP[G + LEFT_SLOT];
+    }
+
+    for (H = 0; H < B; H = H + 1) {
+        NEW_ENV_BIND();
+        HEAP[G + LEFT_SLOT] = RES;
+        G = RES;
+    }
 }
 
 // Expects: Address of value node in A, Index in env in B, Env to bind in in C
@@ -371,6 +402,7 @@ function BIND_IN_ENV() {
     while (B > 0) {
         if (HEAP[G + LEFT_SLOT] === NIL) {
             NEW_ENV_BIND();
+            display("This should not happen");
             HEAP[G + LEFT_SLOT] = RES;
             G = RES;
         } else {
@@ -401,28 +433,23 @@ function ACCESS_ENV() {
 // Returns: RES and A is extended env
 function EXTEND() {
     G = A;
-    O = 1;
-    while (HEAP[G + LEFT_SLOT] !== NIL) {
-        O = O + 1;
-        G = HEAP[G + LEFT_SLOT];
-    }
-    G = A;
-
-    CHECK_OOM();
-
+    A = HEAP[HEAP[A + RIGHT_SLOT] + VAL_SLOT];
     NEW_ENVIRONMENT();
+
     H = RES;
     I = H;
-
     while (HEAP[G + LEFT_SLOT] !== NIL) {
-        NEW_ENV_BIND();
-        HEAP[H + LEFT_SLOT] = RES;
-        HEAP[RES + RIGHT_SLOT] = HEAP[HEAP[G + LEFT_SLOT] + RIGHT_SLOT];
-        H = RES;
+        HEAP[HEAP[H + LEFT_SLOT] + RIGHT_SLOT] =
+            HEAP[HEAP[G + LEFT_SLOT] + RIGHT_SLOT];
+        H = HEAP[H + LEFT_SLOT];
         G = HEAP[G + LEFT_SLOT];
     }
     HEAP[H + LEFT_SLOT] = HEAP[B + LEFT_SLOT];
     RES = I;
+
+    I = HEAP[I + RIGHT_SLOT];
+    J = HEAP[B + RIGHT_SLOT];
+    HEAP[I + VAL_SLOT] = HEAP[I + VAL_SLOT] + HEAP[J + VAL_SLOT];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -442,15 +469,20 @@ function NEW_CLOSURE() {
     NEW();
     J = RES;
     HEAP[J + VAL_SLOT] = "Closure root";
-    HEAP[J + RIGHT_SLOT] = NIL; // Right child is stack size, ignored
 
     // Allocate closure info node
     NEW();
-    HEAP[RES + VAL_SLOT] = H; // Value is new PC
-    HEAP[RES + LEFT_SLOT] = ENV; // Left child is current env node
-    HEAP[RES + RIGHT_SLOT] = NIL; // Right child is extension size, ignored
+    D = RES;
+    HEAP[D + VAL_SLOT] = H; // Value is new PC
+    HEAP[D + LEFT_SLOT] = ENV; // Left child is current env node
 
-    HEAP[J + LEFT_SLOT] = RES; // Left child is closure info node
+    // Allocate 2nd closure info node
+    NEW();
+    E = RES;
+    HEAP[E + VAL_SLOT] = C; // Value is extension count
+
+    HEAP[J + LEFT_SLOT] = D; // Left child is 1st closure info node
+    HEAP[J + RIGHT_SLOT] = E; // Right child is 2nd closure info node
     RES = J;
 }
 
@@ -492,6 +524,8 @@ const MEM = []; // Memory required for instructions
 M[START] = () => {
     NEW_OS();
     OS = RES;
+
+    A = 0;
     NEW_ENVIRONMENT();
     ENV = RES;
     PC = PC + 1;
@@ -641,7 +675,7 @@ M[ASSIGN] = () => {
     BIND_IN_ENV();
     PC = PC + 2;
 };
-MEM[ASSIGN] = 1;
+MEM[ASSIGN] = 0;
 
 M[LD] = () => {
     A = P[PC + 1];
@@ -662,14 +696,12 @@ M[LDF] = () => {
     PUSH_OS_NODE();
     PC = PC + 4;
 };
-MEM[LDF] = 3;
+MEM[LDF] = 4;
 
 M[CALL] = () => {
     N = P[PC + 1]; // Number of args
 
-    O = 2 + N;
-    CHECK_OOM();
-
+    A = N;
     NEW_ENVIRONMENT();
     C = RES; // C is extended part of env
 
@@ -682,14 +714,39 @@ M[CALL] = () => {
 
     POP_OS();
     L = RES; // L is closure node
-    N = HEAP[L + LEFT_SLOT]; // N is closure info node
-    A = HEAP[N + LEFT_SLOT]; // A is closure env
 
     PUSH_RTS(); // Current env and os pushed
 
-    ENV = C; // Temp to keep it from being collected
-    OS = L; // Temp to keep it from being collected
+    ENV = C; // Temp to keep it from being collected, env
+    OS = L; // Temp to keep it from being collected, closure
 
+    CALL_RESUME = true;
+};
+
+function GET_CALL_MEM() {
+    L = OS;
+    D = HEAP[L + LEFT_SLOT]; // D is closure info node 1
+    E = HEAP[L + RIGHT_SLOT]; // E is closure infor node 2
+
+    A = ENV;
+    O = HEAP[E + VAL_SLOT] - HEAP[HEAP[A + RIGHT_SLOT] + VAL_SLOT]; // Extension left
+    ADD_BINDINGS();
+
+    A = HEAP[D + LEFT_SLOT]; // A is closure env
+    O = O + HEAP[HEAP[A + RIGHT_SLOT] + VAL_SLOT];
+}
+
+M[CALL_2] = () => {
+    L = OS;
+    D = HEAP[L + LEFT_SLOT]; // D is closure info node 1
+    E = HEAP[L + RIGHT_SLOT]; // E is closure infor node 2
+
+    C = ENV;
+    A = ENV;
+    B = HEAP[E + VAL_SLOT] - HEAP[HEAP[A + RIGHT_SLOT] + VAL_SLOT]; // Extension left
+    ADD_BINDINGS();
+
+    A = HEAP[D + LEFT_SLOT]; // A is closure env
     B = C;
     EXTEND();
     C = RES; // C is new env
@@ -700,6 +757,8 @@ M[CALL] = () => {
     OS = B;
     ENV = C;
     PC = HEAP[N + VAL_SLOT];
+
+    CALL_RESUME = false;
 };
 
 M[RTN] = () => {
@@ -750,9 +809,18 @@ function run() {
             if (M[A] === undefined) {
                 error(A, "unknown op-code:");
             } else {
+                if (A === CALL && CALL_RESUME) {
+                    A = CALL_2;
+                }
+
                 // Find memory needed
                 if (MEM[A] === undefined) {
                     O = 2;
+                } else if (A === CALL_2) {
+                    GET_CALL_MEM();
+                } else if (A === CALL) {
+                    A = CALL_2;
+                    O = 3 + P[PC + 1];
                 } else {
                     O = MEM[A];
                 }
