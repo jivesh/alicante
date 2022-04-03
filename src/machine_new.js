@@ -46,7 +46,6 @@ let K = 0;
 let L = 0;
 let N = 0;
 let O = 0;
-let Q = 0;
 
 function show_executing(s) {
     display("", "--- RUN ---" + s);
@@ -73,7 +72,6 @@ function show_registers(s) {
     display(L, "L  :");
     display(N, "N  :");
     display(O, "O  :");
-    display(Q, "Q  :");
     display(OS, "OS :");
     display(ENV, "ENV:");
     display(RTS, "RTS:");
@@ -150,64 +148,75 @@ function init_heap(heapsize) {
 /// GC Stuff
 ///////////////////////////////////////////////////////////////////////////////
 
+// GC registers
+let GC_A = 0;
+let GC_B = 0;
+let GC_C = 0;
+let GC_D = 0;
+let GC_E = 0;
+let GC_F = 0;
+
 function STOP_THE_WORLD() {
     display(
         "STOPPED THE WORLD",
         "--------------------------------------------------"
     );
     // Add roots
-    Q = []; // Queue
-    Q[0] = FREE;
+    GC_A = []; // Queue
+    GC_A[0] = FREE;
     HEAP[FREE + COLOR_SLOT] = GREY;
 
-    Q[1] = ENV;
+    GC_A[1] = ENV;
     HEAP[ENV + COLOR_SLOT] = GREY;
 
-    Q[2] = OS;
+    GC_A[2] = OS;
     HEAP[OS + COLOR_SLOT] = GREY;
 
-    K = 3; // Back pointer
-    for (C = 0; C <= TOP_RTS; C = C + 1) {
-        Q[K] = RTS[C];
-        HEAP[Q[K] + COLOR_SLOT] = GREY;
-        K = K + 1;
+    GC_B = 3; // Back pointer
+    for (GC_C = 0; GC_C <= TOP_RTS; GC_C = GC_C + 1) {
+        GC_A[GC_B] = RTS[GC_C];
+        HEAP[GC_A[GC_B] + COLOR_SLOT] = GREY;
+        GC_B = GC_B + 1;
     }
 
     // Marking
-    O = 0; // Front pointer
-    while (O < K) {
-        D = Q[O];
-        if (HEAP[D + COLOR_SLOT] === GREY) {
+    GC_C = 0; // Front pointer
+    while (GC_C < GC_B) {
+        GC_D = GC_A[GC_C];
+        if (HEAP[GC_D + COLOR_SLOT] === GREY) {
             // Mark black and add children
-            HEAP[D + COLOR_SLOT] = BLACK;
+            HEAP[GC_D + COLOR_SLOT] = BLACK;
 
-            for (F = LEFT_SLOT; F <= RIGHT_SLOT; F = F + 1) {
-                E = HEAP[D + F];
-                if (E === NIL) {
+            for (GC_E = LEFT_SLOT; GC_E <= RIGHT_SLOT; GC_E = GC_E + 1) {
+                GC_F = HEAP[GC_D + GC_E];
+                if (GC_F === NIL) {
                 }
-                HEAP[E + COLOR_SLOT] = math_max(HEAP[E + COLOR_SLOT], GREY);
-                Q[K] = E;
-                K = K + 1;
+                HEAP[GC_F + COLOR_SLOT] = math_max(
+                    HEAP[GC_F + COLOR_SLOT],
+                    GREY
+                );
+                GC_A[GC_B] = GC_F;
+                GC_B = GC_B + 1;
             }
         } else {
         }
-        O = O + 1;
+        GC_C = GC_C + 1;
     }
 
     // Sweeping
-    for (C = 0; C < array_length(HEAP); C = C + NODE_SIZE) {
-        if (HEAP[C + COLOR_SLOT] === WHITE) {
+    for (GC_C = 0; GC_C < array_length(HEAP); GC_C = GC_C + NODE_SIZE) {
+        if (HEAP[GC_C + COLOR_SLOT] === WHITE) {
             // Append white to free list
             HEAP[FREE + VAL_SLOT] = "Free node";
-            HEAP[C + VAL_SLOT] = "Free root";
-            HEAP[C + LEFT_SLOT] = FREE;
-            HEAP[C + RIGHT_SLOT] = NIL;
-            FREE = C;
+            HEAP[GC_C + VAL_SLOT] = "Free root";
+            HEAP[GC_C + LEFT_SLOT] = FREE;
+            HEAP[GC_C + RIGHT_SLOT] = NIL;
+            FREE = GC_C;
 
             FREE_LEFT = FREE_LEFT + 1;
         } else {
         }
-        HEAP[C + COLOR_SLOT] = WHITE;
+        HEAP[GC_C + COLOR_SLOT] = WHITE;
     }
 }
 
@@ -231,9 +240,6 @@ function CHECK_OOM() {
 // Pops from free list if available
 // Returns: RES is new node address
 function NEW() {
-    O = 1;
-    CHECK_OOM();
-
     RES = FREE;
     FREE = HEAP[FREE + LEFT_SLOT];
     HEAP[FREE + VAL_SLOT] = "Free root";
@@ -251,9 +257,6 @@ function NEW() {
 // Expects: value in A
 // Returns: OS & RES is new OS head
 function PUSH_OS_VAL() {
-    O = 2;
-    CHECK_OOM();
-
     // Allocate number
     NEW();
     HEAP[RES + VAL_SLOT] = A;
