@@ -226,14 +226,17 @@ function INVOKE_GC() {
 
 // Expects: Requried number of nodes in O
 function CHECK_OOM() {
+    RES = false;
     if (FREE_LEFT < O) {
         STOP_THE_WORLD();
         if (FREE === NIL) {
             STATE = OUT_OF_MEMORY_ERROR;
             RUNNING = false;
         } else {
+            RES = true;
         }
     } else {
+        RES = true;
     }
 }
 
@@ -431,9 +434,6 @@ function EXTEND() {
 function NEW_CLOSURE() {
     display("New closure");
 
-    O = 2;
-    CHECK_OOM();
-
     G = A;
     H = B;
     I = C;
@@ -486,7 +486,8 @@ function show_heap_value(address) {
 /// Machine Stuff
 ///////////////////////////////////////////////////////////////////////////////
 
-const M = [];
+const M = []; // Instrcutions
+const MEM = []; // Memory required for instructions
 
 M[START] = () => {
     NEW_OS();
@@ -514,9 +515,6 @@ M[LDCU] = () => {
 };
 
 M[PLUS] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -526,9 +524,6 @@ M[PLUS] = () => {
 };
 
 M[MINUS] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -538,9 +533,6 @@ M[MINUS] = () => {
 };
 
 M[TIMES] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -550,9 +542,6 @@ M[TIMES] = () => {
 };
 
 M[EQUAL] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -562,9 +551,6 @@ M[EQUAL] = () => {
 };
 
 M[LESS] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -574,9 +560,6 @@ M[LESS] = () => {
 };
 
 M[GEQ] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -586,9 +569,6 @@ M[GEQ] = () => {
 };
 
 M[LEQ] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -598,9 +578,6 @@ M[LEQ] = () => {
 };
 
 M[GREATER] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     POP_OS();
@@ -610,9 +587,6 @@ M[GREATER] = () => {
 };
 
 M[NOT] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = !HEAP[RES + VAL_SLOT];
     PUSH_OS_BOOL();
@@ -620,9 +594,6 @@ M[NOT] = () => {
 };
 
 M[DIV] = () => {
-    O = 2;
-    CHECK_OOM();
-
     POP_OS();
     A = HEAP[RES + VAL_SLOT];
     B = A;
@@ -643,6 +614,7 @@ M[POP] = () => {
     POP_OS();
     PC = PC + 1;
 };
+MEM[POP] = 0;
 
 M[JOF] = () => {
     POP_OS();
@@ -654,15 +626,14 @@ M[JOF] = () => {
         PC = P[PC + 1];
     }
 };
+MEM[JOF] = 0;
 
 M[GOTO] = () => {
     PC = P[PC + 1];
 };
+MEM[GOTO] = 0;
 
 M[ASSIGN] = () => {
-    O = 1;
-    CHECK_OOM();
-
     POP_OS();
     A = RES;
     B = P[PC + 1];
@@ -670,6 +641,7 @@ M[ASSIGN] = () => {
     BIND_IN_ENV();
     PC = PC + 2;
 };
+MEM[ASSIGN] = 1;
 
 M[LD] = () => {
     A = P[PC + 1];
@@ -678,20 +650,19 @@ M[LD] = () => {
     PUSH_OS_NODE();
     PC = PC + 2;
 };
+MEM[LD] = 1;
 
 M[LDF] = () => {
     A = P[PC + LDF_MAX_OS_SIZE_OFFSET];
     B = P[PC + LDF_ADDRESS_OFFSET];
     C = P[PC + LDF_ENV_EXTENSION_COUNT_OFFSET];
 
-    O = 3;
-    CHECK_OOM();
-
     NEW_CLOSURE();
     A = RES;
     PUSH_OS_NODE();
     PC = PC + 4;
 };
+MEM[LDF] = 3;
 
 M[CALL] = () => {
     N = P[PC + 1]; // Number of args
@@ -742,17 +713,19 @@ M[RTN] = () => {
     OS = HEAP[H + LEFT_SLOT];
     PUSH_OS_NODE();
 };
+MEM[RTN] = 1;
 
 M[DONE] = () => {
     RUNNING = false;
 };
+MEM[DONE] = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Main loop
 ///////////////////////////////////////////////////////////////////////////////
 
 function scan_heap() {
-    let K = 0;
+    K = 0;
     for (I = 0; I < array_length(HEAP); I = I + NODE_SIZE) {
         J = HEAP[I + VAL_SLOT];
         if (J === "Free node" || J === "Free root") {
@@ -773,13 +746,25 @@ function run() {
             INVOKE_GC();
         } else {
             display(PC, "PC: ");
-            if (M[P[PC]] === undefined) {
-                error(P[PC], "unknown op-code:");
+            A = P[PC];
+            if (M[A] === undefined) {
+                error(A, "unknown op-code:");
             } else {
-                M[P[PC]]();
+                // Find memory needed
+                if (MEM[A] === undefined) {
+                    O = 2;
+                } else {
+                    O = MEM[A];
+                }
+
+                // Check if enough memory available
+                CHECK_OOM();
+                if (RES) {
+                    M[A](); // Run instruction
+                }
             }
-            scan_heap();
         }
+        scan_heap();
     }
     if (STATE === DIV_ERROR) {
         POP_OS();
