@@ -520,6 +520,7 @@ function show_heap_value(address) {
 
 const M = []; // Instrcutions
 const MEM = []; // Memory required for instructions
+const CALL_2 = 23;
 
 M[START] = () => {
     NEW_OS();
@@ -738,15 +739,15 @@ function GET_CALL_MEM() {
 
 M[CALL_2] = () => {
     L = OS;
-    D = HEAP[L + LEFT_SLOT]; // D is closure info node 1
-    E = HEAP[L + RIGHT_SLOT]; // E is closure infor node 2
+    K = HEAP[L + LEFT_SLOT]; // K is closure info node 1
+    N = HEAP[L + RIGHT_SLOT]; // N is closure infor node 2
 
     C = ENV;
     A = ENV;
-    B = HEAP[E + VAL_SLOT] - HEAP[HEAP[A + RIGHT_SLOT] + VAL_SLOT]; // Extension left
+    B = HEAP[N + VAL_SLOT] - HEAP[HEAP[A + RIGHT_SLOT] + VAL_SLOT]; // Extension left
     ADD_BINDINGS();
 
-    A = HEAP[D + LEFT_SLOT]; // A is closure env
+    A = HEAP[K + LEFT_SLOT]; // A is closure env
     B = C;
     EXTEND();
     C = RES; // C is new env
@@ -756,7 +757,7 @@ M[CALL_2] = () => {
 
     OS = B;
     ENV = C;
-    PC = HEAP[N + VAL_SLOT];
+    PC = HEAP[K + VAL_SLOT];
 
     CALL_RESUME = false;
 };
@@ -782,6 +783,8 @@ MEM[DONE] = 0;
 ///////////////////////////////////////////////////////////////////////////////
 /// Main loop
 ///////////////////////////////////////////////////////////////////////////////
+
+let CALL_RESUME = false;
 
 function scan_heap() {
     K = 0;
