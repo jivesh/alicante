@@ -263,13 +263,13 @@ function PUSH_OS_VAL() {
     // Allocate number
     NEW();
     HEAP[RES + VAL_SLOT] = A;
-    G = RES;
+    D = RES;
 
     // Allocate new os node
     NEW();
     HEAP[RES + VAL_SLOT] = "OS Top";
     HEAP[RES + LEFT_SLOT] = OS; // Left child as current OS node
-    HEAP[RES + RIGHT_SLOT] = G; // Right child as value node
+    HEAP[RES + RIGHT_SLOT] = D; // Right child as value node
 
     HEAP[OS + VAL_SLOT] = "OS Node";
     OS = RES;
@@ -326,11 +326,11 @@ function NEW_OS() {
 // Returns: RES is value node
 function POP_OS() {
     display("Popping from OS");
-    G = OS;
+    D = OS;
     OS = HEAP[OS + LEFT_SLOT];
-    RES = HEAP[G + RIGHT_SLOT];
+    RES = HEAP[D + RIGHT_SLOT];
 
-    HEAP[G + VAL_SLOT] = "Popped";
+    HEAP[D + VAL_SLOT] = "Popped";
     HEAP[OS + VAL_SLOT] = "OS Top";
 }
 
@@ -359,11 +359,11 @@ function NEW_ENVIRONMENT() {
     HEAP[RES + VAL_SLOT] = A;
 
     // Allocate binding nodes
-    G = RES;
+    E = D;
     for (H = 0; H < A; H = H + 1) {
         NEW_ENV_BIND();
-        HEAP[G + LEFT_SLOT] = RES;
-        G = RES;
+        HEAP[E + LEFT_SLOT] = RES;
+        E = RES;
     }
     RES = D;
 }
