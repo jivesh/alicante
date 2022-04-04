@@ -1,6 +1,9 @@
 import sys
 
-MACHINE_FILE = sys.argv[1]
+try:
+    MACHINE_FILE = sys.argv[1]
+except:
+    raise Exception("Try `merge_files.py NAME_OF_VM_FILE`")
 
 f1 = open("compile.js", 'r')
 f2 = open(MACHINE_FILE, 'r')
