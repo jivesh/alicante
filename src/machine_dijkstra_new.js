@@ -218,13 +218,13 @@ function APPEND_PHASE() {
     } else {
         GC_C = HEAP[GC_A + COLOR_SLOT];
         if (GC_C === BLACK) {
-            HEAP[GC_INDEX + COLOR_SLOT] = WHITE;
+            HEAP[GC_A + COLOR_SLOT] = WHITE;
         } else if (GC_C === WHITE) {
             HEAP[FREE + VAL_SLOT] = "Free node";
-            HEAP[GC_INDEX + VAL_SLOT] = "Free root";
-            HEAP[GC_INDEX + LEFT_SLOT] = FREE;
-            HEAP[GC_INDEX + RIGHT_SLOT] = NIL;
-            FREE = GC_INDEX;
+            HEAP[GC_A + VAL_SLOT] = "Free root";
+            HEAP[GC_A + LEFT_SLOT] = FREE;
+            HEAP[GC_A + RIGHT_SLOT] = NIL;
+            FREE = GC_A;
 
             FREE_LEFT = FREE_LEFT + 1;
         } else {
@@ -343,10 +343,10 @@ function NEW() {
     HEAP[FREE + VAL_SLOT] = "Free root";
 
     HEAP[RES + LEFT_SLOT] = NIL;
-    HEAP[FREE + COLOR_SLOT] = math_max(
-        math_min(HEAP[RES + COLOR_SLOT], GREY),
-        HEAP[FREE + COLOR_SLOT]
-    ); // Pass on color if needed
+    HEAP[FREE + COLOR_SLOT] =
+        HEAP[FREE + COLOR_SLOT] === HEAP[RES + COLOR_SLOT]
+            ? math_min(HEAP[RES + COLOR_SLOT], GREY)
+            : HEAP[FREE + COLOR_SLOT]; // Pass on color if needed
 
     HEAP[RES + COLOR_SLOT] = math_max(HEAP[RES + COLOR_SLOT], GREY);
 
@@ -433,10 +433,10 @@ function POP_OS() {
     HEAP[D + VAL_SLOT] = "Popped";
     HEAP[OS + VAL_SLOT] = "OS Top";
 
-    HEAP[OS + COLOR_SLOT] = math_max(
-        math_min(HEAP[D + COLOR_SLOT], GREY),
-        HEAP[OS + COLOR_SLOT]
-    );
+    HEAP[OS + COLOR_SLOT] =
+        HEAP[OS + COLOR_SLOT] === HEAP[D + COLOR_SLOT]
+            ? math_min(HEAP[D + COLOR_SLOT], GREY)
+            : HEAP[OS + COLOR_SLOT];
 
     HEAP[RES + COLOR_SLOT] = math_max(HEAP[RES + COLOR_SLOT], GREY);
 }
