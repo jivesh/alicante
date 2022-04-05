@@ -5,10 +5,10 @@ try:
 except:
     raise Exception("Try `merge_files.py NAME_OF_VM_FILE`")
 
-f1 = open("compile.js", 'r')
-f2 = open(MACHINE_FILE, 'r')
+f1 = open("compile.js", "r")
+f2 = open(MACHINE_FILE, "r")
 
-file_out = open("machine_out.js", 'w')
+file_out = open("machine_out.js", "w")
 
 for line in f1.readlines():
     file_out.write(line)
