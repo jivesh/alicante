@@ -265,6 +265,9 @@ function CHECK_OOM() {
         } else {
             RES = true;
         }
+
+        // Reset GC
+        GC_STATE = MARK_ROOTS;
     } else {
         RES = true;
     }
