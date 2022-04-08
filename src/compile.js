@@ -77,6 +77,27 @@ function constant_declaration_value(stmt) {
 function make_constant_declaration(name, value_expression) {
     return list("constant_declaration", name, value_expression);
 }
+
+function is_variable_declaration(stmt) {
+    return is_tagged_list(stmt, "variable_declaration");
+}
+function variable_declaration_value(stmt) {
+    return head(tail(tail(stmt)));
+}
+function make_variable_declaration(name, value_expression) {
+    return list("variable_declaration", name, value_expression);
+}
+
+function is_assignment(stmt) {
+    return is_tagged_list(stmt, "assignment");
+}
+function assignment_declaration_value(stmt) {
+    return head(tail(tail(stmt)));
+}
+function make_assignment(name, value_expression) {
+    return list("assignment", name, value_expression);
+}
+
 function is_declaration(component) {
     return (
         is_tagged_list(component, "constant_declaration") ||
@@ -671,6 +692,31 @@ function parse_and_compile(string) {
         return max_stack_size;
     }
 
+    function compile_variable_declaration(expr, index_table) {
+        const name = declaration_symbol(expr);
+        const index = index_of(index_table, name);
+        const max_stack_size = compile(
+            constant_declaration_value(expr),
+            index_table,
+            false
+        );
+        add_unary_instruction(ASSIGN, index);
+        add_nullary_instruction(LDCU);
+        return max_stack_size;
+    }
+
+    function compile_assignment(expr, index_table) {
+        const name = declaration_symbol(expr);
+        const index = index_of(index_table, name);
+        const max_stack_size = compile(
+            constant_declaration_value(expr),
+            index_table,
+            false
+        );
+        add_unary_instruction(ASSIGN, index);
+        return max_stack_size;
+    }
+
     function compile(expr, index_table, insert_flag) {
         let max_stack_size = 0;
         if (is_literal(expr)) {
@@ -712,6 +758,10 @@ function parse_and_compile(string) {
             insert_flag = false;
         } else if (is_constant_declaration(expr)) {
             max_stack_size = compile_constant_declaration(expr, index_table);
+        } else if (is_variable_declaration(expr)) {
+                max_stack_size = compile_variable_declaration(expr, index_table);
+        } else if (is_assignment(expr)) {
+            max_stack_size = compile_assignment(expr, index_table);
         } else if (is_function_declaration(expr)) {
             max_stack_size = compile(
                 function_decl_to_constant_decl(expr),
