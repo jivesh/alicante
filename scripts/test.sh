@@ -41,45 +41,26 @@ test_expected_output() {
 # ... code
 # // expected:
 test_source() {
-    SOURCE_PATH=$1
+    VM_SOURCE_PATH=$1
     TEST_INPUT=$2
+    TEST_OUTPUT_DIR=$3
 
     TEST_NAME=$(basename "$TEST_INPUT")
+    COMPILER_PATH="src/compile.js"
 
-    SOURCE_CODE=$(cat $SOURCE_PATH)
+    TEST_OUTPUT_FILE=$(printf "%s//%s" "$TEST_OUTPUT_DIR" "$TEST_NAME")
+    rm -f TEST_OUTPUT_FILE
+    touch TEST_OUTPUT_FILE
+
+    VM_CODE=$(cat $VM_SOURCE_PATH)
+    COMPILER_CODE=$(cat $COMPILER_PATH)
+    SOURCE_CODE=$(printf "%s\\n%s" "$COMPILER_CODE" "$VM_CODE")
+
     TEST_SOURCE=$(test_source_code $TEST_INPUT)
 
     PROGRAM=$(printf "%s\\n%s" "$SOURCE_CODE" "$TEST_SOURCE")
 
-    # create temporary files to hold inputs to diff
-    EXPECTED_OUTPUT_FILE=$(mktemp)
-    SOURCE_OUTPUT_FILE=$(mktemp)
-
-    # populate temporary files
-    test_expected_output "$TEST_INPUT" > "$EXPECTED_OUTPUT_FILE"
-    $JS_SLANG -e --chapter=4 "$PROGRAM" > "$SOURCE_OUTPUT_FILE" 2>&1
-
-    EXPECTED_OUTPUT=$(cat "$EXPECTED_OUTPUT_FILE")
-    if [[ ${#EXPECTED_OUTPUT} -gt 32 ]]; then
-        TRUNCATED_OUTPUT=$(echo "$EXPECTED_OUTPUT" | cut -c 1-32 -)
-        PRETTY_EXPECTED=$(printf "%s..." "$TRUNCATED_OUTPUT")
-    else
-        PRETTY_EXPECTED="$EXPECTED_OUTPUT"
-    fi
-
-    # run diff
-    echo "${normal}$SOURCE_PATH:$TEST_NAME, expecting: $PRETTY_EXPECTED"
-    DIFF=$(diff "$SOURCE_OUTPUT_FILE" "$EXPECTED_OUTPUT_FILE" 2>&1)
-
-    # delete temporary files
-    rm "$EXPECTED_OUTPUT_FILE" "$SOURCE_OUTPUT_FILE"
-
-    # record result of test
-    if [ "$DIFF" = "" ]; then
-            passed=$((passed+1)); echo "${green}PASS"
-    else
-            failed=$((failed+1)); echo "${red}FAIL:$DIFF"
-    fi
+    $JS_SLANG -e --chapter=4 "$PROGRAM" > "$TEST_OUTPUT_FILE" 2>&1
 }
 
 
@@ -91,6 +72,9 @@ fi
 for TEST_FOLDER in $TEST_FOLDERS; do
     SOURCE_NAME="${TEST_FOLDER#*/}"
     SOURCE_PATH="src/$SOURCE_NAME.js"
+    TEST_OUTPUT_PATH="test-outputs/$SOURCE_NAME"
+
+    mkdir -p "$TEST_OUTPUT_PATH"
 
     # make sure student source file exists
     if [ ! -f "$SOURCE_PATH" ]; then
@@ -100,7 +84,7 @@ for TEST_FOLDER in $TEST_FOLDERS; do
     # run through each test input and test student source against input
     for TEST_PATH in $TEST_FOLDER/*; do
         if [ -f "$TEST_PATH" ]; then
-            test_source "$SOURCE_PATH" "$TEST_PATH"
+          test_source "src/machine_new.js" "$TEST_PATH" "$TEST_OUTPUT_PATH"
         fi
     done
 done
