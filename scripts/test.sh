@@ -47,8 +47,9 @@ test_source() {
 
     TEST_NAME=$(basename "$TEST_INPUT")
     COMPILER_PATH="src/compile.js"
+#    echo "Number of lines in compiler file is $(wc -l < $COMPILER_PATH)"
 
-    TEST_OUTPUT_FILE=$(printf "%s//%s" "$TEST_OUTPUT_DIR" "$TEST_NAME")
+    TEST_OUTPUT_FILE=$(printf "%s/%s" "$TEST_OUTPUT_DIR" "$TEST_NAME")
     rm -f TEST_OUTPUT_FILE
     touch TEST_OUTPUT_FILE
 
@@ -61,6 +62,8 @@ test_source() {
     PROGRAM=$(printf "%s\\n%s" "$SOURCE_CODE" "$TEST_SOURCE")
 
     $JS_SLANG -e --chapter=4 "$PROGRAM" > "$TEST_OUTPUT_FILE" 2>&1
+
+    echo "Executed test $TEST_NAME, find output in $TEST_OUTPUT_FILE"
 }
 
 
@@ -84,12 +87,12 @@ for TEST_FOLDER in $TEST_FOLDERS; do
     # run through each test input and test student source against input
     for TEST_PATH in $TEST_FOLDER/*; do
         if [ -f "$TEST_PATH" ]; then
-          test_source "src/machine_new.js" "$TEST_PATH" "$TEST_OUTPUT_PATH"
+          test_source "$SOURCE_PATH" "$TEST_PATH" "$TEST_OUTPUT_PATH"
         fi
     done
 done
 
-echo "${normal}test cases completed; $passed passed, $failed failed"
+echo "${normal}test cases completed"
 if [ $failed -gt 0 ]; then
     exit -1
 else
