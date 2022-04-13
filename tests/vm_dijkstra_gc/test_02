@@ -1,0 +1,10 @@
+P = parse_and_compile(`
+let counter = 5;
+while (counter > 0) {
+    counter = counter - 1;
+}
+counter + 0;
+`);
+
+initialize_machine(300);
+run();

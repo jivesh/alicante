@@ -273,12 +273,22 @@ function CHECK_OOM() {
     }
 }
 
+// Reset all colours
+function CLEAR_COLORS() {
+    for (let node_counter = NIL + NODE_SIZE; node_counter < HEAP_SIZE; node_counter = node_counter + NODE_SIZE) {
+        HEAP[node_counter + COLOR_SLOT] = WHITE;
+    }
+}
+
 // Fall back
 function STOP_THE_WORLD() {
     display(
         "STOPPED THE WORLD",
         "--------------------------------------------------"
     );
+
+    CLEAR_COLORS();
+
     // Add roots
     GC_A = []; // Queue
     GC_A[0] = FREE;
@@ -307,8 +317,7 @@ function STOP_THE_WORLD() {
 
             for (GC_E = LEFT_SLOT; GC_E <= RIGHT_SLOT; GC_E = GC_E + 1) {
                 GC_F = HEAP[GC_D + GC_E];
-                if (GC_F === NIL) {
-                }
+
                 HEAP[GC_F + COLOR_SLOT] = math_max(
                     HEAP[GC_F + COLOR_SLOT],
                     GREY
@@ -618,10 +627,10 @@ function POP_RTS() {
 }
 
 function show_heap_value(address) {
-    // display(
-    //     "",
-    //     "result: heap node of value = " + stringify(HEAP[address + VAL_SLOT])
-    // );
+    display(
+        "",
+        "result: heap node of value = " + stringify(HEAP[address + VAL_SLOT])
+    );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -751,8 +760,7 @@ M[DIV] = () => {
     if (B) {
         STATE = DIV_ERROR;
         RUNNING = false;
-    } else {
-    }
+    } else {}
 };
 
 M[POP] = () => {
@@ -902,7 +910,7 @@ function scan_heap() {
         J = HEAP[I + VAL_SLOT];
         if (J === "Free node" || J === "Free root") {
             K = K + 1;
-        }
+        } else {}
     }
     display(
         array_length(HEAP) - K * 4,
@@ -919,7 +927,7 @@ function run() {
     while (RUNNING) {
         if (SEQ[SEQ_I] === undefined) {
             SEQ[SEQ_I] = math_random() < GC_PROBABILITY ? 1 : 0;
-        }
+        } else {}
 
         if (SEQ[SEQ_I] === 1) {
             INVOKE_GC();
@@ -931,7 +939,7 @@ function run() {
             } else {
                 if (A === CALL && CALL_RESUME) {
                     A = CALL_2;
-                }
+                } else {}
 
                 // Find memory needed
                 if (MEM[A] === undefined) {
@@ -949,7 +957,7 @@ function run() {
                 CHECK_OOM();
                 if (RES) {
                     M[A](); // Run instruction
-                }
+                } else {}
             }
         }
 
