@@ -1,0 +1,7 @@
+P = parse_and_compile(`
+let counter = 10;
+
+`);
+
+initialize_machine(300);
+run();

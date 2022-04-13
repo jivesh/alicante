@@ -1,9 +1,0 @@
-P = parse_and_compile('! (2 < 3 || 1 > 0);');
-
-initialize_machine(400);
-run();
-
-// expected: 
-Running VM with heap size: 400
-result: heap node of type = bool, value = false ""
-undefined

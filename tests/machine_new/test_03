@@ -1,9 +1,0 @@
-P = [START, LDCN, 3, LDCN, 10, LDCN, 10, PLUS, TIMES, DONE];
-
-initialize_machine(400);
-run();
-
-// expected: 
-Running VM with heap size: 400
-result: heap node of type = number, value = 60 ""
-undefined

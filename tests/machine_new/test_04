@@ -1,9 +1,0 @@
-P = parse_and_compile('3 * (1 + 1) -  2;');
-
-initialize_machine(400);
-run();
-
-// expected: 
-Running VM with heap size: 400
-result: heap node of type = number, value = 4 ""
-undefined

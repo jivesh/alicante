@@ -199,6 +199,19 @@ function block_body(component) {
     return head(tail(component));
 }
 
+// while loops are tagged with "while_loop"
+// have a condition and a body
+
+function is_while_loop(component) {
+    return is_tagged_list(component, "while_loop");
+}
+function while_condition(component) {
+    return list_ref(component, 1);
+}
+function while_body(component) {
+    return list_ref(component, 2);
+}
+
 // function declarations are tagged with "lambda_expression"
 // have a list of "parameters" and a "body" statement
 
@@ -574,6 +587,22 @@ function parse_and_compile(string) {
         return math_max(m_1, m_2, m_3);
     }
 
+    function compile_while_loop(expr, index_table, insert_flag) {
+        const GOTO_endpoint = insert_pointer;
+
+        const cond = compile(while_condition(expr), index_table, false);
+        add_unary_instruction(JOF, NaN);
+        const JOF_address = insert_pointer - 1;
+
+        const body = compile(while_body(expr), index_table, insert_flag);
+        add_unary_instruction(GOTO, NaN);
+        const GOTO_address = insert_pointer - 1;
+        machine_code[GOTO_address] = GOTO_endpoint;
+
+        machine_code[JOF_address] = insert_pointer;
+        return math_max(cond, body);
+    }
+
     function compile_operator_combination(expr, index_table) {
         const op = operator_symbol(expr);
         const operand_1 = first_operand(expr);
@@ -762,6 +791,8 @@ function parse_and_compile(string) {
                 max_stack_size = compile_variable_declaration(expr, index_table);
         } else if (is_assignment(expr)) {
             max_stack_size = compile_assignment(expr, index_table);
+        } else if (is_while_loop(expr)) {
+            max_stack_size = compile_while_loop(expr, index_table, insert_flag);
         } else if (is_function_declaration(expr)) {
             max_stack_size = compile(
                 function_decl_to_constant_decl(expr),
