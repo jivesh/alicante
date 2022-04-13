@@ -157,10 +157,6 @@ let GC_E = 0;
 let GC_F = 0;
 
 function STOP_THE_WORLD() {
-    display(
-        "STOPPED THE WORLD",
-        "--------------------------------------------------"
-    );
     // Add roots
     GC_A = []; // Queue
     GC_A[0] = FREE;
@@ -833,6 +829,7 @@ function run() {
                 } else {}
             }
         }
+        STOP_THE_WORLD();
         scan_heap();
     }
     if (STATE === DIV_ERROR) {
