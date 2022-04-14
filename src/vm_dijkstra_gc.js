@@ -166,7 +166,7 @@ function MARK_ROOTS_PHASE() {
         "MARKING ROOTS",
         "--------------------------------------------------"
     );
-    // HEAP[NIL + COLOR_SLOT] = GREY;
+    HEAP[NIL + COLOR_SLOT] = BLACK;
     HEAP[FREE + COLOR_SLOT] = GREY;
     HEAP[OS + COLOR_SLOT] = GREY;
     HEAP[ENV + COLOR_SLOT] = GREY;
@@ -275,6 +275,7 @@ function CHECK_OOM() {
 
 // Reset all colours
 function CLEAR_COLORS() {
+    HEAP[NIL + COLOR_SLOT] = BLACK; // Ensure NIL is not collected
     for (GC_F = NIL + NODE_SIZE; GC_F < HEAP_SIZE; GC_F = GC_F + NODE_SIZE) {
         HEAP[GC_F + COLOR_SLOT] = WHITE;
     }
@@ -317,13 +318,15 @@ function STOP_THE_WORLD() {
 
             for (GC_E = LEFT_SLOT; GC_E <= RIGHT_SLOT; GC_E = GC_E + 1) {
                 GC_F = HEAP[GC_D + GC_E];
-
-                HEAP[GC_F + COLOR_SLOT] = math_max(
-                    HEAP[GC_F + COLOR_SLOT],
-                    GREY
-                );
-                GC_A[GC_B] = GC_F;
-                GC_B = GC_B + 1;
+                if (GC_F === NIL) {
+                } else {
+                    HEAP[GC_F + COLOR_SLOT] = math_max(
+                        HEAP[GC_F + COLOR_SLOT],
+                        GREY
+                    );
+                    GC_A[GC_B] = GC_F;
+                    GC_B = GC_B + 1;
+                }
             }
         } else {
         }
@@ -842,6 +845,7 @@ M[CALL] = () => {
 
     CALL_RESUME = true;
 };
+MEM[CALL] = -1;
 
 function GET_CALL_MEM() {
     L = OS;
@@ -850,10 +854,9 @@ function GET_CALL_MEM() {
 
     A = ENV;
     O = HEAP[E + VAL_SLOT] - HEAP[HEAP[A + RIGHT_SLOT] + VAL_SLOT]; // Extension left
-    ADD_BINDINGS();
 
     A = HEAP[D + LEFT_SLOT]; // A is closure env
-    O = O + HEAP[HEAP[A + RIGHT_SLOT] + VAL_SLOT];
+    O = O + HEAP[HEAP[A + RIGHT_SLOT] + VAL_SLOT] + 3;
 }
 
 M[CALL_2] = () => {
@@ -880,6 +883,7 @@ M[CALL_2] = () => {
 
     CALL_RESUME = false;
 };
+MEM[CALL_2] = -1;
 
 M[RTN] = () => {
     POP_RTS();
@@ -936,31 +940,30 @@ function run() {
             INVOKE_GC();
         } else {
             // display(PC, "PC: ");
-            A = P[PC]; // Current Instruction
-            if (M[A] === undefined) {
-                error(A, "unknown op-code:");
+            F = P[PC]; // Current Instruction
+            if (M[F] === undefined) {
+                error(F, "unknown op-code:");
             } else {
-                if (A === CALL && CALL_RESUME) {
-                    A = CALL_2;
+                if (F === CALL && CALL_RESUME) {
+                    F = CALL_2;
                 } else {
                 }
 
                 // Find memory needed
-                if (MEM[A] === undefined) {
+                if (MEM[F] === undefined) {
                     O = 2;
-                } else if (A === CALL_2) {
+                } else if (F === CALL_2) {
                     GET_CALL_MEM();
-                } else if (A === CALL) {
-                    A = CALL_2;
+                } else if (F === CALL) {
                     O = 3 + P[PC + 1];
                 } else {
-                    O = MEM[A];
+                    O = MEM[F];
                 }
 
                 // Check if enough memory available
                 CHECK_OOM();
                 if (RES) {
-                    M[A](); // Run instruction
+                    M[F](); // Run instruction
                 } else {
                 }
             }

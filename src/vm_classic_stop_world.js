@@ -161,7 +161,7 @@ function STOP_THE_WORLD() {
         "STOPPED THE WORLD",
         "--------------------------------------------------"
     );
-    HEAP[NIL + COLOR_SLOT] = BLACK;
+    HEAP[NIL + COLOR_SLOT] = BLACK; // Ensure NIL is not collected
 
     // Add roots
     GC_A = []; // Queue
