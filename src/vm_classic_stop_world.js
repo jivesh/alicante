@@ -190,7 +190,8 @@ function STOP_THE_WORLD() {
             for (GC_E = LEFT_SLOT; GC_E <= RIGHT_SLOT; GC_E = GC_E + 1) {
                 GC_F = HEAP[GC_D + GC_E];
                 if (GC_F === NIL) {
-                } else {}
+                } else {
+                }
                 HEAP[GC_F + COLOR_SLOT] = math_max(
                     HEAP[GC_F + COLOR_SLOT],
                     GREY
@@ -198,7 +199,8 @@ function STOP_THE_WORLD() {
                 GC_A[GC_B] = GC_F;
                 GC_B = GC_B + 1;
             }
-        } else {}
+        } else {
+        }
         GC_C = GC_C + 1;
     }
 
@@ -213,13 +215,14 @@ function STOP_THE_WORLD() {
             FREE = GC_C;
 
             FREE_LEFT = FREE_LEFT + 1;
-        } else {}
+        } else {
+        }
         HEAP[GC_C + COLOR_SLOT] = WHITE;
     }
 }
 
 function INVOKE_GC() {
-    display("COLLECTING GARBAGE");
+    display("NOT DOING ANYTHING!");
 }
 
 // Expects: Requried number of nodes in O
@@ -790,19 +793,25 @@ function scan_heap() {
         J = HEAP[I + VAL_SLOT];
         if (J === "Free node" || J === "Free root") {
             K = K + 1;
-        } else {}
+        } else {
+        }
     }
-    display(
-        array_length(HEAP) - K * 4,
-        "Used: "
-    );
+    display(array_length(HEAP) - K * 4, "Used: ");
 }
+
+const SEQ = [0];
+let SEQ_I = 0;
 
 function run() {
     const GC_PROBABILITY = 0.0;
 
     while (RUNNING) {
-        if (math_random() < GC_PROBABILITY) {
+        if (SEQ[SEQ_I] === undefined) {
+            SEQ[SEQ_I] = math_random() < GC_PROBABILITY ? 1 : 0;
+        } else {
+        }
+
+        if (SEQ[SEQ_I] === 1) {
             INVOKE_GC();
         } else {
             // display(PC, "PC: ");
@@ -812,7 +821,8 @@ function run() {
             } else {
                 if (A === CALL && CALL_RESUME) {
                     A = CALL_2;
-                } else {}
+                } else {
+                }
 
                 // Find memory needed
                 if (MEM[A] === undefined) {
@@ -830,9 +840,12 @@ function run() {
                 CHECK_OOM();
                 if (RES) {
                     M[A](); // Run instruction
-                } else {}
+                } else {
+                }
             }
         }
+
+        SEQ_I = SEQ_I + 1;
         scan_heap();
     }
     if (STATE === DIV_ERROR) {
