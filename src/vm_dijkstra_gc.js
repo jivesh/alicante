@@ -275,8 +275,8 @@ function CHECK_OOM() {
 
 // Reset all colours
 function CLEAR_COLORS() {
-    for (let node_counter = NIL + NODE_SIZE; node_counter < HEAP_SIZE; node_counter = node_counter + NODE_SIZE) {
-        HEAP[node_counter + COLOR_SLOT] = WHITE;
+    for (GC_F = NIL + NODE_SIZE; GC_F < HEAP_SIZE; GC_F = GC_F + NODE_SIZE) {
+        HEAP[GC_F + COLOR_SLOT] = WHITE;
     }
 }
 
@@ -760,7 +760,8 @@ M[DIV] = () => {
     if (B) {
         STATE = DIV_ERROR;
         RUNNING = false;
-    } else {}
+    } else {
+    }
 };
 
 M[POP] = () => {
@@ -910,7 +911,8 @@ function scan_heap() {
         J = HEAP[I + VAL_SLOT];
         if (J === "Free node" || J === "Free root") {
             K = K + 1;
-        } else {}
+        } else {
+        }
     }
     display(
         array_length(HEAP) - K * 4,
@@ -927,7 +929,8 @@ function run() {
     while (RUNNING) {
         if (SEQ[SEQ_I] === undefined) {
             SEQ[SEQ_I] = math_random() < GC_PROBABILITY ? 1 : 0;
-        } else {}
+        } else {
+        }
 
         if (SEQ[SEQ_I] === 1) {
             INVOKE_GC();
@@ -939,7 +942,8 @@ function run() {
             } else {
                 if (A === CALL && CALL_RESUME) {
                     A = CALL_2;
-                } else {}
+                } else {
+                }
 
                 // Find memory needed
                 if (MEM[A] === undefined) {
@@ -957,7 +961,8 @@ function run() {
                 CHECK_OOM();
                 if (RES) {
                     M[A](); // Run instruction
-                } else {}
+                } else {
+                }
             }
         }
 
