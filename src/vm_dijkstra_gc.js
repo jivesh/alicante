@@ -237,8 +237,8 @@ function APPEND_PHASE() {
     }
 }
 
-const MARK_REPS = 5; // num of markings each round
-const APPEND_REPS = 1; // num of appends each rouns
+let MARK_REPS = 5; // num of markings each round
+let APPEND_REPS = 1; // num of appends each rouns
 function INVOKE_GC() {
     display("COLLECTING GARBAGE");
     if (GC_STATE === MARK_ROOTS) {
@@ -982,3 +982,6 @@ function run() {
         show_heap_value(RES);
     }
 }
+
+MARK_REPS = 10;
+APPEND_REPS = 10;
