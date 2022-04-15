@@ -587,7 +587,7 @@ function parse_and_compile(string) {
         return math_max(m_1, m_2, m_3);
     }
 
-    function compile_while_loop(expr, index_table, insert_flag) {
+    function compile_while_loop(expr, index_table) {
         const GOTO_endpoint = insert_pointer;
 
         const cond = compile(while_condition(expr), index_table, false);
