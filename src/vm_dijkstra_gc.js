@@ -228,6 +228,7 @@ function APPEND_PHASE() {
 
             FREE_LEFT = FREE_LEFT + 1;
         } else {
+            display(HEAP);
             display(
                 "SHOULDNT HAPPEN",
                 "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -927,6 +928,64 @@ function scan_heap() {
 const SEQ = [0];
 let SEQ_I = 0;
 
+const RUN_PROGRAM = 0;
+const RUN_GC = 1;
+
+// User can change this
+let test_interleaving = list(RUN_PROGRAM, RUN_GC);
+
+function run_with_test_interleaving() {
+    while (RUNNING) {
+        if (SEQ[SEQ_I] === undefined) {
+            // Keep wrapping around the test interleaving
+            SEQ[SEQ_I] = list_ref(test_interleaving, SEQ_I % length(test_interleaving));
+        } else {}
+
+        if (SEQ[SEQ_I] === RUN_GC) {
+            INVOKE_GC();
+        } else {
+            // display(PC, "PC: ");
+            F = P[PC]; // Current Instruction
+            if (M[F] === undefined) {
+                error(F, "unknown op-code:");
+            } else {
+                if (F === CALL && CALL_RESUME) {
+                    F = CALL_2;
+                } else {}
+
+                // Find memory needed
+                if (MEM[F] === undefined) {
+                    O = 2;
+                } else if (F === CALL_2) {
+                    GET_CALL_MEM();
+                } else if (F === CALL) {
+                    O = 3 + P[PC + 1];
+                } else {
+                    O = MEM[F];
+                }
+
+                // Check if enough memory available
+                CHECK_OOM();
+                if (RES) {
+                    M[F](); // Run instruction
+                } else {}
+            }
+        }
+
+        SEQ_I = SEQ_I + 1;
+        scan_heap();
+    }
+    if (STATE === DIV_ERROR) {
+        POP_OS();
+        error(RES, "execution aborted:");
+    } else if (STATE === OUT_OF_MEMORY_ERROR) {
+        error(RES, "memory exhausted");
+    } else {
+        POP_OS();
+        show_heap_value(RES);
+    }
+}
+
 function run() {
     const GC_PROBABILITY = 0.2;
 
@@ -981,6 +1040,14 @@ function run() {
         POP_OS();
         show_heap_value(RES);
     }
+}
+
+function configure_mark_reps(n) {
+    MARK_REPS = math_floor(HEAP_SIZE / NODE_SIZE) / n;
+}
+
+function configure_append_reps(n) {
+    APPEND_REPS = math_floor(HEAP_SIZE / NODE_SIZE) / n;
 }
 
 MARK_REPS = 10;
