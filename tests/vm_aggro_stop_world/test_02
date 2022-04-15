@@ -1,10 +1,12 @@
 P = parse_and_compile(`
-let counter = 5;
-while (counter > 0) {
-    counter = counter - 1;
-}
-counter + 0;
+const pair = (a, b) => f => f(a, b);
+const head = p => p((h, t) => h);
+const tail = p => p((h, t) => t);
+const stream_tail = s => tail(s)();
+
+const streamer = n => pair(n, () => streamer(n + 1));
+head(stream_tail(streamer(0)));
 `);
 
-initialize_machine(300);
+initialize_machine(500);
 run();

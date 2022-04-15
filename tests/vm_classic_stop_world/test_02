@@ -8,5 +8,5 @@ const streamer = n => pair(n, () => streamer(n + 1));
 head(stream_tail(streamer(0)));
 `);
 
-initialize_machine(300);
+initialize_machine(500git );
 run();
