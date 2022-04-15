@@ -157,10 +157,10 @@ let GC_E = 0;
 let GC_F = 0;
 
 function STOP_THE_WORLD() {
-    display(
-        "STOPPED THE WORLD",
-        "--------------------------------------------------"
-    );
+    // display(
+    //     "STOPPED THE WORLD",
+    //     "--------------------------------------------------"
+    // );
     HEAP[NIL + COLOR_SLOT] = BLACK; // Ensure NIL is not collected
 
     // Add roots
@@ -224,7 +224,7 @@ function STOP_THE_WORLD() {
 }
 
 function INVOKE_GC() {
-    display("NOT DOING ANYTHING!");
+
 }
 
 // Expects: Requried number of nodes in O
@@ -799,7 +799,7 @@ function scan_heap() {
         } else {
         }
     }
-    display(array_length(HEAP) - K * 4, "Used: ");
+    display(array_length(HEAP) - K * 4);
 }
 
 const SEQ = [0];

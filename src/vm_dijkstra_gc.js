@@ -162,10 +162,6 @@ let GC_E = 0;
 let GC_F = 0;
 
 function MARK_ROOTS_PHASE() {
-    display(
-        "MARKING ROOTS",
-        "--------------------------------------------------"
-    );
     HEAP[NIL + COLOR_SLOT] = BLACK;
     HEAP[FREE + COLOR_SLOT] = GREY;
     HEAP[OS + COLOR_SLOT] = GREY;
@@ -180,8 +176,6 @@ function MARK_ROOTS_PHASE() {
 }
 
 function MARK_PHASE() {
-    display("MARKING", "--------------------------------------------------");
-
     if (GC_B < 1) {
         GC_STATE = APPEND;
         GC_A = 0;
@@ -211,8 +205,6 @@ function MARK_PHASE() {
 }
 
 function APPEND_PHASE() {
-    display("APPENDING", "--------------------------------------------------");
-
     if (GC_A === HEAP_SIZE) {
         GC_STATE = MARK_ROOTS;
     } else {
@@ -229,10 +221,6 @@ function APPEND_PHASE() {
             FREE_LEFT = FREE_LEFT + 1;
         } else {
             display(HEAP);
-            display(
-                "SHOULDNT HAPPEN",
-                "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-            );
         }
         GC_A = GC_A + NODE_SIZE;
     }
@@ -241,7 +229,6 @@ function APPEND_PHASE() {
 let MARK_REPS = 5; // num of markings each round
 let APPEND_REPS = 1; // num of appends each rouns
 function INVOKE_GC() {
-    display("COLLECTING GARBAGE");
     if (GC_STATE === MARK_ROOTS) {
         MARK_ROOTS_PHASE();
     } else if (GC_STATE === MARK) {
@@ -284,11 +271,6 @@ function CLEAR_COLORS() {
 
 // Fall back
 function STOP_THE_WORLD() {
-    display(
-        "STOPPED THE WORLD",
-        "--------------------------------------------------"
-    );
-
     CLEAR_COLORS();
 
     // Add roots
@@ -391,21 +373,18 @@ function PUSH_OS_VAL() {
 // Expects: value in A
 // Returns: OS & RES is new OS head
 function PUSH_OS_NUM() {
-    display(A, "New number:");
     PUSH_OS_VAL();
 }
 
 // Expects: value in A
 // Returns: OS & RES is new OS head
 function PUSH_OS_BOOL() {
-    display(A, "New boolean:");
     PUSH_OS_VAL();
 }
 
 // Doesn't expect anything
 // Returns: OS & RES is new OS head
 function PUSH_OS_UNDEF() {
-    display("New undefined");
     A = "undefined";
     PUSH_OS_VAL();
 }
@@ -413,8 +392,6 @@ function PUSH_OS_UNDEF() {
 // Expects: node address in A
 // Returns: OS & RES is new OS head
 function PUSH_OS_NODE() {
-    display("Pushing node");
-
     // Allocate new os node
     NEW();
     HEAP[RES + VAL_SLOT] = "OS Top";
@@ -430,7 +407,6 @@ function PUSH_OS_NODE() {
 // Doesn't expect anything
 // Returns: RES is new OS
 function NEW_OS() {
-    display("New OS");
     NEW();
     HEAP[RES + VAL_SLOT] = "OS Top";
 }
@@ -438,7 +414,6 @@ function NEW_OS() {
 // Doesn't expect anything
 // Returns: RES is value node
 function POP_OS() {
-    display("Popping from OS");
     D = OS; // Old OS top
     OS = HEAP[OS + LEFT_SLOT]; // New OS top
     RES = HEAP[D + RIGHT_SLOT];
@@ -451,14 +426,6 @@ function POP_OS() {
     HEAP[RES + COLOR_SLOT] = math_max(HEAP[RES + COLOR_SLOT], GREY);
 }
 
-// // Doesn't expect anything
-// // Returns: RES is value node
-// function PEEK_OS() {
-//     display("Peeking OS");
-//     G = HEAP[OS + RIGHT_SLOT];
-//     RES = HEAP[G + VAL_SLOT];
-// }
-
 ///////////////////////////////////////////////////////////////////////////////
 /// Env Stuff
 ///////////////////////////////////////////////////////////////////////////////
@@ -466,7 +433,6 @@ function POP_OS() {
 // Expects: Size of env in A
 // Returns: RES is new ENV
 function NEW_ENVIRONMENT() {
-    display("New ENV");
     NEW();
     HEAP[RES + VAL_SLOT] = "ENV Start";
     D = RES;
@@ -486,7 +452,6 @@ function NEW_ENVIRONMENT() {
 }
 
 function NEW_ENV_BIND() {
-    display("New env binding");
     NEW();
     HEAP[RES + VAL_SLOT] = "Env Bind";
 }
@@ -519,7 +484,6 @@ function BIND_IN_ENV() {
     while (B > 0) {
         if (HEAP[G + LEFT_SLOT] === NIL) {
             NEW_ENV_BIND();
-            display("This should not happen");
             HEAP[G + LEFT_SLOT] = RES;
             G = RES;
         } else {
@@ -529,14 +493,12 @@ function BIND_IN_ENV() {
     }
 
     // Assign binding
-    // display("Assigned binding");
     HEAP[G + RIGHT_SLOT] = H;
 }
 
 // Expects: Index in env in A
 // Returns: RES is value node
 function ACCESS_ENV() {
-    // display("Acessing env");
     G = ENV;
     B = A + 1;
     while (B > 0) {
@@ -576,8 +538,6 @@ function EXTEND() {
 // Expects: Stack size in A, Func PC in B, Env extension count in C
 // Returns: RES is closure node
 function NEW_CLOSURE() {
-    // display("New closure");
-
     G = A;
     H = B;
     I = C;
@@ -914,8 +874,7 @@ function scan_heap() {
         }
     }
     display(
-        array_length(HEAP) - K * 4,
-        "--------------------------------------------------Used: "
+        array_length(HEAP) - K * 4
     );
 }
 

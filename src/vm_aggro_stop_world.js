@@ -795,7 +795,7 @@ function scan_heap() {
         } else {
         }
     }
-    display(array_length(HEAP) - K * 4, "Used: ");
+    display(array_length(HEAP) - K * 4);
 }
 
 const SEQ = [0];
