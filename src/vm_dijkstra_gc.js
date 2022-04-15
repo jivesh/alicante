@@ -359,10 +359,7 @@ function NEW() {
     HEAP[FREE + VAL_SLOT] = "Free root";
 
     HEAP[RES + LEFT_SLOT] = NIL;
-    HEAP[FREE + COLOR_SLOT] =
-        HEAP[FREE + COLOR_SLOT] !== HEAP[RES + COLOR_SLOT]
-            ? math_min(HEAP[RES + COLOR_SLOT], GREY)
-            : HEAP[FREE + COLOR_SLOT]; // Pass on color if needed
+    HEAP[FREE + COLOR_SLOT] = math_max(HEAP[FREE + COLOR_SLOT], GREY);
 
     HEAP[RES + COLOR_SLOT] = math_max(HEAP[RES + COLOR_SLOT], GREY);
 
@@ -449,10 +446,7 @@ function POP_OS() {
     HEAP[D + VAL_SLOT] = "Popped";
     HEAP[OS + VAL_SLOT] = "OS Top";
 
-    HEAP[OS + COLOR_SLOT] =
-        HEAP[OS + COLOR_SLOT] !== HEAP[D + COLOR_SLOT]
-            ? math_min(HEAP[D + COLOR_SLOT], GREY)
-            : HEAP[OS + COLOR_SLOT];
+    HEAP[OS + COLOR_SLOT] = math_max(HEAP[OS + COLOR_SLOT], GREY);
 
     HEAP[RES + COLOR_SLOT] = math_max(HEAP[RES + COLOR_SLOT], GREY);
 }
