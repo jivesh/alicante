@@ -360,7 +360,7 @@ function NEW() {
 
     HEAP[RES + LEFT_SLOT] = NIL;
     HEAP[FREE + COLOR_SLOT] =
-        HEAP[FREE + COLOR_SLOT] === HEAP[RES + COLOR_SLOT]
+        HEAP[FREE + COLOR_SLOT] !== HEAP[RES + COLOR_SLOT]
             ? math_min(HEAP[RES + COLOR_SLOT], GREY)
             : HEAP[FREE + COLOR_SLOT]; // Pass on color if needed
 
@@ -450,7 +450,7 @@ function POP_OS() {
     HEAP[OS + VAL_SLOT] = "OS Top";
 
     HEAP[OS + COLOR_SLOT] =
-        HEAP[OS + COLOR_SLOT] === HEAP[D + COLOR_SLOT]
+        HEAP[OS + COLOR_SLOT] !== HEAP[D + COLOR_SLOT]
             ? math_min(HEAP[D + COLOR_SLOT], GREY)
             : HEAP[OS + COLOR_SLOT];
 
@@ -938,8 +938,12 @@ function run_with_test_interleaving() {
     while (RUNNING) {
         if (SEQ[SEQ_I] === undefined) {
             // Keep wrapping around the test interleaving
-            SEQ[SEQ_I] = list_ref(test_interleaving, SEQ_I % length(test_interleaving));
-        } else {}
+            SEQ[SEQ_I] = list_ref(
+                test_interleaving,
+                SEQ_I % length(test_interleaving)
+            );
+        } else {
+        }
 
         if (SEQ[SEQ_I] === RUN_GC) {
             INVOKE_GC();
@@ -951,7 +955,8 @@ function run_with_test_interleaving() {
             } else {
                 if (F === CALL && CALL_RESUME) {
                     F = CALL_2;
-                } else {}
+                } else {
+                }
 
                 // Find memory needed
                 if (MEM[F] === undefined) {
@@ -968,7 +973,8 @@ function run_with_test_interleaving() {
                 CHECK_OOM();
                 if (RES) {
                     M[F](); // Run instruction
-                } else {}
+                } else {
+                }
             }
         }
 
