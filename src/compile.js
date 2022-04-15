@@ -594,12 +594,14 @@ function parse_and_compile(string) {
         add_unary_instruction(JOF, NaN);
         const JOF_address = insert_pointer - 1;
 
-        const body = compile(while_body(expr), index_table, insert_flag);
+        const body = compile(while_body(expr), index_table, false);
         add_unary_instruction(GOTO, NaN);
         const GOTO_address = insert_pointer - 1;
         machine_code[GOTO_address] = GOTO_endpoint;
 
         machine_code[JOF_address] = insert_pointer;
+        add_nullary_instruction(LDCU);
+
         return math_max(cond, body);
     }
 
@@ -792,7 +794,7 @@ function parse_and_compile(string) {
         } else if (is_assignment(expr)) {
             max_stack_size = compile_assignment(expr, index_table);
         } else if (is_while_loop(expr)) {
-            max_stack_size = compile_while_loop(expr, index_table, insert_flag);
+            max_stack_size = compile_while_loop(expr, index_table);
         } else if (is_function_declaration(expr)) {
             max_stack_size = compile(
                 function_decl_to_constant_decl(expr),
