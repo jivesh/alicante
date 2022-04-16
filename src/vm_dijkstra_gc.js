@@ -183,6 +183,8 @@ function MARK_PHASE() {
         GC_C = HEAP[GC_A + COLOR_SLOT];
 
         if (GC_C === GREY) {
+            display("G");
+
             HEAP[GC_A + COLOR_SLOT] = BLACK;
 
             for (GC_D = LEFT_SLOT; GC_D <= RIGHT_SLOT; GC_D = GC_D + 1) {
@@ -205,6 +207,8 @@ function MARK_PHASE() {
 }
 
 function APPEND_PHASE() {
+    display("G");
+
     if (GC_A === HEAP_SIZE) {
         GC_STATE = MARK_ROOTS;
     } else {
@@ -296,6 +300,7 @@ function STOP_THE_WORLD() {
     while (GC_C < GC_B) {
         GC_D = GC_A[GC_C];
         if (HEAP[GC_D + COLOR_SLOT] === GREY) {
+            display("G");
             // Mark black and add children
             HEAP[GC_D + COLOR_SLOT] = BLACK;
 
@@ -318,6 +323,8 @@ function STOP_THE_WORLD() {
 
     // Sweeping
     for (GC_C = 0; GC_C < array_length(HEAP); GC_C = GC_C + NODE_SIZE) {
+        display("G");
+
         if (HEAP[GC_C + COLOR_SLOT] === WHITE) {
             // Append white to free list
             HEAP[FREE + VAL_SLOT] = "Free node";
@@ -873,9 +880,7 @@ function scan_heap() {
         } else {
         }
     }
-    display(
-        array_length(HEAP) - K * 4
-    );
+    // display(array_length(HEAP) - K * 4);
 }
 
 const SEQ = [0];
@@ -925,6 +930,7 @@ function run_with_test_interleaving() {
                 // Check if enough memory available
                 CHECK_OOM();
                 if (RES) {
+                    display("P");
                     M[F](); // Run instruction
                 } else {
                 }
@@ -1008,6 +1014,3 @@ function configure_mark_reps(n) {
 function configure_append_reps(n) {
     APPEND_REPS = math_floor(HEAP_SIZE / NODE_SIZE) / n;
 }
-
-MARK_REPS = 10;
-APPEND_REPS = 10;
