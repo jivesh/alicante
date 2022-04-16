@@ -11,7 +11,7 @@ x_data = [0]
 count = 0
 for ele in prog:
     print(ele)
-    if ele == "P":
+    if ele == '"P"':
         count += 1
     x_data.append(count)
 
