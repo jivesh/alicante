@@ -19,8 +19,9 @@ collection. After running each instruction, it runs a complete mark-and-sweep
 to collect garbage.
 3. `vm_dijkstra_gc.js`: A VM with the Dijkstra GC implementation
 
+## How to run a program using a particular VM
 Here are the instructions to run Source programs on any VM:
-1. To target `vm_X.js`, create a test directory called `tests/vm_X`
+1. To run a program on `vm_X.js`, create a test directory called `tests/vm_X`
 2. In this test directory, add any tests in the form
 ```javascript
 P = parse_and_compile(`

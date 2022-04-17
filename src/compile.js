@@ -595,12 +595,13 @@ function parse_and_compile(string) {
         const JOF_address = insert_pointer - 1;
 
         const body = compile(while_body(expr), index_table, false);
+        add_nullary_instruction(POP);
         add_unary_instruction(GOTO, NaN);
         const GOTO_address = insert_pointer - 1;
         machine_code[GOTO_address] = GOTO_endpoint;
 
         machine_code[JOF_address] = insert_pointer;
-        add_nullary_instruction(LDCU);
+        add_unary_instruction(LDCB, true);
 
         return math_max(cond, body);
     }
