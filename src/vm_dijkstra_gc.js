@@ -928,7 +928,7 @@ const RUN_GC = 1;
 function run_with_test_interleaving(test_interleaving) {
     if (head(test_interleaving) !== RUN_PROGRAM) {
         error("Program must always run first before GC!");
-    }
+    } else {}
 
     while (RUNNING) {
         if (SEQ[SEQ_I] === undefined) {
