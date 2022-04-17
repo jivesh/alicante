@@ -16,7 +16,7 @@ world, collects garbage via mark-and-sweep, and then continues running
 instructions.
 2. `vm_aggro_stop_world.js`: A VM with aggressive stop-the-world garbage
 collection. After running each instruction, it runs a complete mark-and-sweep
-to collect garbage.
+to collect garbage. We use this to establish lower bounds of memory usage for test programs.
 3. `vm_dijkstra_gc.js`: A VM with the Dijkstra GC implementation
 
 ## Setup
