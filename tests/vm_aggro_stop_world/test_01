@@ -6,5 +6,5 @@ function factorial(n) {
 factorial(5);
 `);
 
-initialize_machine(300);
+initialize_machine(500);
 run();

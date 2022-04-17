@@ -4,13 +4,27 @@ const head = p => p((h, t) => h);
 const tail = p => p((h, t) => t);
 const stream_tail = s => tail(s)();
 
-const streamer = n => pair(n, () => streamer(n + 1));
-head(stream_tail(streamer(0)));
+let my_stream = pair(1, () => my_stream);
+
+let count = 5;
+
+function placeholder(n) {
+    my_stream = stream_tail(my_stream);
+    return n;
+}
+
+while (count > 0) {
+    count = placeholder(count) - 1;
+}
+
+5;
 `);
 
-initialize_machine(500);
+initialize_machine(1500);
 
-configure_mark_reps(5);
-configure_append_reps(50);
+configure_mark_reps(4);
+configure_append_reps(8);
 
-run_with_test_interleaving();
+const my_test_interleaving = list(RUN_PROGRAM, RUN_GC);
+
+run_with_test_interleaving(my_test_interleaving);
