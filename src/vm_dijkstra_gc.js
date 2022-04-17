@@ -925,10 +925,11 @@ let SEQ_I = 0;
 const RUN_PROGRAM = 0;
 const RUN_GC = 1;
 
-// User can change this
-let test_interleaving = list(RUN_PROGRAM, RUN_GC);
+function run_with_test_interleaving(test_interleaving) {
+    if (head(test_interleaving) !== RUN_PROGRAM) {
+        error("Program must always run first before GC!");
+    }
 
-function run_with_test_interleaving() {
     while (RUNNING) {
         if (SEQ[SEQ_I] === undefined) {
             // Keep wrapping around the test interleaving
