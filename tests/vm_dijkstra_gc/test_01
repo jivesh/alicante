@@ -6,5 +6,11 @@ function factorial(n) {
 factorial(5);
 `);
 
-initialize_machine(300);
-run();
+initialize_machine(500);
+
+configure_mark_reps(4);
+configure_append_reps(8);
+
+const my_test_interleaving = list(RUN_PROGRAM, RUN_GC);
+
+run_with_test_interleaving(my_test_interleaving);

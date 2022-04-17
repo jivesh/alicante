@@ -884,10 +884,10 @@ let SEQ_I = 0;
 const RUN_PROGRAM = 0;
 const RUN_GC = 1;
 
-// User can change this
-let test_interleaving = list(RUN_PROGRAM, RUN_GC);
-
-function run_with_test_interleaving() {
+function run_with_test_interleaving(test_interleaving) {
+    if (head(test_interleaving) !== RUN_PROGRAM) {
+        error("First instruction must always be program");
+    } else {}
     while (RUNNING) {
         if (SEQ[SEQ_I] === undefined) {
             // Keep wrapping around the test interleaving
