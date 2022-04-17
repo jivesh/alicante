@@ -20,7 +20,7 @@ to collect garbage. We use this to establish lower bounds of memory usage for te
 3. `vm_dijkstra_gc.js`: A VM with the Dijkstra GC implementation
 
 ## Setup
-To install the dependencies to run the testsuite locally, run the following:
+To install the dependencies to run the testsuite locally, run the following (after cloning the repo):
 
 ```{0}
 yarn install
